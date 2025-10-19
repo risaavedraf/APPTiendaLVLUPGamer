@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("kotlin-kapt")
 }
 
 android {
@@ -40,6 +41,32 @@ android {
 }
 
 dependencies {
+    val roomVersion = "2.6.1"
+    val lifecycleVersion = "2.8.6"
+    val activityCompose = "1.9.3"
+    val navCompose = "2.8.3"
+
+    implementation(platform("androidx.compose:compose-bom:2024.10.00"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+
+    implementation("androidx.activity:activity-compose:$activityCompose")
+    implementation("androidx.navigation:navigation-compose:$navCompose")
+
+    // Lifecycle / MVVM
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
+
+    // Room (SQLite)
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+    kapt("androidx.room:room-compiler:$roomVersion")
+
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation("androidx.compose.material:material-icons-extended-android:1.6.5")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

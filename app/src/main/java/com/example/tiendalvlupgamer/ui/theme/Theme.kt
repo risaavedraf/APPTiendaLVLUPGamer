@@ -1,58 +1,46 @@
-package com.example.appmovil.ui.theme
+// En: app/src/main/java/com/example/levelupgamer/ui/theme/Theme.kt
+
+package com.example.tiendalvlupgamer.ui.theme
 
 import android.app.Activity
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
-
+// Define la paleta de colores para el tema claro de la app
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = Yellow_LevelUp,    // Color principal para botones, app bars, etc.
+    secondary = Grey,
+    background = White,          // Color de fondo de la app.
+    surface = White,             // Color para superficies como las Cards.
+    onPrimary = Black,           // Color del texto sobre el color primario (negro para buen contraste).
+    onBackground = Black,        // Color del texto sobre el fondo blanco.
+    onSurface = Black,          // Color del texto sobre las superficies blancas.
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+
 )
 
 @Composable
-fun AppMovilTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+fun LevelUpGamerTheme(
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    val colorScheme = LightColorScheme
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            window.statusBarColor = colorScheme.primary.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
         }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = AppTypography, // Asegúrate de tener tu archivo Type.kt configurado
         content = content
     )
 }
