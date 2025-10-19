@@ -63,6 +63,8 @@ import com.example.tiendalvlupgamer.model.local.AppDatabase
 import com.example.tiendalvlupgamer.model.local.ReviewEntity
 import com.example.tiendalvlupgamer.viewmodel.ProductViewModel
 import com.example.tiendalvlupgamer.viewmodel.ProductViewModelFactory
+import com.example.tiendalvlupgamer.viewmodel.CartViewModel
+import com.example.tiendalvlupgamer.viewmodel.CartViewModelFactory
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -74,26 +76,28 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
     val db = AppDatabase.get(context)
     val productDao = db.productDao()
     val reviewDao = db.reviewDao()
+    val cartDao = db.cartDao()
 
     // Usamos la Factory actualizada
-    val viewModel: ProductViewModel =
-        viewModel(factory = ProductViewModelFactory(productDao, reviewDao))
+    val productViewModel: ProductViewModel = viewModel(factory = ProductViewModelFactory(productDao, reviewDao))
+    val cartViewModel: CartViewModel = viewModel(factory = CartViewModelFactory(cartDao))
+
 
     LaunchedEffect(productId) {
-        viewModel.getProductById(productId)
+        productViewModel.getProductById(productId)
     }
 
     DisposableEffect(Unit) {
         onDispose {
-            viewModel.clearSelectedProduct()
+            productViewModel.clearSelectedProduct()
         }
     }
 
-    val product by viewModel.selectedProduct.collectAsState()
+    val product by productViewModel.selectedProduct.collectAsState()
     var quantity by remember { mutableStateOf(1) }
 
     // Estado para la nueva reseña
-    val reviews by viewModel.reviewsForProduct.collectAsState()
+    val reviews by productViewModel.reviewsForProduct.collectAsState()
     var userRating by remember { mutableStateOf(0) }
     var userComment by remember { mutableStateOf("") }
 
@@ -179,6 +183,7 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
                     }
                     Button(
                         onClick = {
+                            cartViewModel.addOrUpdateProduct(product!!, quantity)
                             Toast.makeText(
                                 context,
                                 "$quantity ${product!!.name}(s) agregado(s) al carrito",
@@ -240,7 +245,7 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
                     Button(
                         onClick = {
                             if (userRating > 0 && userComment.isNotBlank()) {
-                                viewModel.addReview(productId, userRating, userComment)
+                                productViewModel.addReview(productId, userRating, userComment)
                                 // Limpiar campos después de enviar
                                 userComment = ""
                                 userRating = 0

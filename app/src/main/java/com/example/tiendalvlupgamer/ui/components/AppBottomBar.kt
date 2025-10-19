@@ -17,17 +17,18 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.levelupgamer.ui.navigation.AppScreens
 
 sealed class BottomBarScreen(
     val route: String,
     val title: String,
     val icon: ImageVector
 ) {
-    object Home : BottomBarScreen("home_screen", "Inicio", Icons.Default.Home)
-    object Search : BottomBarScreen("search", "Buscar", Icons.Default.Search)
-    object Profile : BottomBarScreen("profile", "Perfil", Icons.Default.Person)
-    object Cart : BottomBarScreen("cart", "Carrito", Icons.Default.ShoppingCart)
-    object Menu : BottomBarScreen("menu", "Mas", Icons.Default.Menu)
+    object Home : BottomBarScreen(AppScreens.HomeScreen.route, "Inicio", Icons.Default.Home)
+    object Search : BottomBarScreen(AppScreens.SearchScreen.route, "Buscar", Icons.Default.Search)
+    object Profile : BottomBarScreen("profile", "Perfil", Icons.Default.Person) // Aún no implementado
+    object Cart : BottomBarScreen(AppScreens.CartScreen.route, "Carrito", Icons.Default.ShoppingCart) // <-- ¡CORREGIDO!
+    object Menu : BottomBarScreen("menu", "Mas", Icons.Default.Menu) // Aún no implementado
 }
 
 @Composable
@@ -53,7 +54,6 @@ fun AppBottomBar(navController: NavController) {
                 selected = currentRoute == screen.route,
                 onClick = {
                     navController.navigate(screen.route) {
-                        // ✅ ESTE ES EL CAMBIO IMPORTANTE
                         popUpTo(navController.graph.findStartDestination().id) {
                             saveState = true
                         }

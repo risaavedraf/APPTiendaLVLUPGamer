@@ -10,6 +10,7 @@ sealed class AppScreens(val route: String) {
         fun createRoute(productId: String) = "product_detail_screen/$productId"
     }
     object CatalogScreen : AppScreens("catalog_screen")
+    object CartScreen : AppScreens("cart")
 
 
 }

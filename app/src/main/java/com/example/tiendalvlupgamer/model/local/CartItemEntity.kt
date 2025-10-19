@@ -6,7 +6,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "reviews",
+    tableName = "cart_items",
     foreignKeys = [
         ForeignKey(
             entity = ProductEntity::class,
@@ -17,11 +17,7 @@ import androidx.room.PrimaryKey
     ],
     indices = [Index(value = ["productId"])]
 )
-data class ReviewEntity(
-    @PrimaryKey(autoGenerate = true)
-    val reviewId: Int = 0,
-    val productId: String,
-    val rating: Int,
-    val comment: String,
-    val author: String = "Usuario Anónimo"
+data class CartItemEntity(
+    @PrimaryKey val productId: String, // ¡CORREGIDO! productId es ahora la clave primaria
+    val quantity: Int
 )

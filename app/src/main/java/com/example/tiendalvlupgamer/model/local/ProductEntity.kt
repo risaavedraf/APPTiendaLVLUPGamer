@@ -11,5 +11,5 @@ data class ProductEntity(
     val name: String,
     val price: Int,
     val description: String,
-    @DrawableRes val image: Int,
+    @DrawableRes val image: Int
 )
