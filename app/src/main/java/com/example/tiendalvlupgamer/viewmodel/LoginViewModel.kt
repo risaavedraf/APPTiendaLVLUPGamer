@@ -5,9 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.tiendalvlupgamer.model.local.AppDatabase
 import com.example.tiendalvlupgamer.data.dao.UserDao
 import com.example.tiendalvlupgamer.model.LoginUiState
+import com.example.tiendalvlupgamer.util.SessionManager
 import com.example.tiendalvlupgamer.util.ValidationHelper
 import kotlinx.coroutines.launch
 
@@ -58,6 +58,9 @@ class LoginViewModel(private val userDao: UserDao) : ViewModel() {
                 val user = userDao.login(uiState.emailOrUsername, uiState.password)
 
                 if (user != null) {
+                    // ¡CORREGIDO! Guardamos el usuario en la sesión.
+                    SessionManager.login(user)
+
                     uiState = uiState.copy(
                         loading = false,
                         loginSuccess = true,

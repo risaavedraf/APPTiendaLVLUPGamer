@@ -15,6 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.levelupgamer.ui.components.AppBottomBar
 import com.example.levelupgamer.ui.navigation.AppScreens
+import com.example.tiendalvlupgamer.util.SessionManager
 import com.example.tiendalvlupgamer.view.LoginScreen
 import com.example.tiendalvlupgamer.view.RegisterScreen
 import com.example.tiendalvlupgamer.view.WelcomeScreen
@@ -56,6 +57,8 @@ fun AppNavigation() {
                     onNavigateRegister = { navController.navigate(AppScreens.RegisterScreen.route) },
                     onNavigateLogin = { navController.navigate(AppScreens.LoginScreen.route) },
                     onNavigateGuest = {
+                        // ¡CORREGIDO! Limpiamos la sesión antes de navegar.
+                        SessionManager.logout()
                         navController.navigate(AppScreens.HomeScreen.route) {
                             popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
                         }

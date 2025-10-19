@@ -155,9 +155,8 @@ fun LoginScreen(
             Button(
                 onClick = {
                     viewModel.tryLogin {
-                        navController.navigate(AppScreens.WelcomeScreen.route) {
-                            popUpTo(AppScreens.LoginScreen.route) { inclusive = true }
-                        }
+                        // ¡CORREGIDO! Se llama al callback onLogin
+                        onLogin(uiState)
                     }
                 },
                 modifier = Modifier
