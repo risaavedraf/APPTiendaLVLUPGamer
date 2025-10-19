@@ -1,22 +1,18 @@
 package com.example.tiendalvlupgamer.viewmodel
 
-import android.app.Application
 import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.tiendalvlupgamer.data.database.AppDatabase
+import com.example.tiendalvlupgamer.data.dao.UserDao
 import com.example.tiendalvlupgamer.data.entity.User
 import com.example.tiendalvlupgamer.util.ValidationHelper
 import com.example.tiendalvlupgamer.model.RegisterUiState
 import kotlinx.coroutines.launch
 
-
-class RegisterViewModel(application: Application) : AndroidViewModel(application) {
-    private val userDao = AppDatabase.getDatabase(application).userDao()
+class RegisterViewModel(private val userDao: UserDao) : ViewModel() {
 
     var uiState by mutableStateOf(RegisterUiState())
         private set
@@ -80,11 +76,9 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
         val emailErr = ValidationHelper.validateEmail(uiState.email)
         val passwordErr = ValidationHelper.validatePassword(uiState.password)
 
-        // Verificar si el email ya existe
         val existingEmail = userDao.getUserByEmail(uiState.email)
         val emailExistsErr = if (existingEmail != null) "Este correo ya está registrado" else null
 
-        // Verificar si el username ya existe
         val existingUsername = userDao.getUserByUsername(uiState.username)
         val usernameExistsErr = if (existingUsername != null) "Este username ya está en uso" else null
 

@@ -1,18 +1,17 @@
 package com.example.tiendalvlupgamer.viewmodel
 
-import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.tiendalvlupgamer.data.database.AppDatabase
+import com.example.tiendalvlupgamer.model.local.AppDatabase
+import com.example.tiendalvlupgamer.data.dao.UserDao
 import com.example.tiendalvlupgamer.model.LoginUiState
 import com.example.tiendalvlupgamer.util.ValidationHelper
 import kotlinx.coroutines.launch
 
-class LoginViewModel(application: Application) : AndroidViewModel(application) {
-    private val userDao = AppDatabase.getDatabase(application).userDao()
+class LoginViewModel(private val userDao: UserDao) : ViewModel() {
 
     var uiState by mutableStateOf(LoginUiState())
         private set
@@ -56,11 +55,9 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             try {
-                // Buscar usuario por email o username
                 val user = userDao.login(uiState.emailOrUsername, uiState.password)
 
                 if (user != null) {
-                    // Login exitoso
                     uiState = uiState.copy(
                         loading = false,
                         loginSuccess = true,
@@ -68,7 +65,6 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                     )
                     onSuccess()
                 } else {
-                    // Credenciales incorrectas
                     uiState = uiState.copy(
                         loading = false,
                         error = "Usuario o contraseña incorrectos"

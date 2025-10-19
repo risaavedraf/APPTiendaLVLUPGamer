@@ -5,16 +5,23 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.tiendalvlupgamer.R
+import com.example.tiendalvlupgamer.data.dao.UserDao
+import com.example.tiendalvlupgamer.data.entity.User
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import com.example.tiendalvlupgamer.R
 
-@Database(entities = [ProductEntity::class, ReviewEntity::class, CartItemEntity::class], version = 4, exportSchema = false)
+@Database(
+    entities = [ProductEntity::class, ReviewEntity::class, CartItemEntity::class, User::class], // <-- ENTIDAD USER AÑADIDA
+    version = 5, // <-- VERSIÓN INCREMENTADA
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun productDao(): ProductDao
     abstract fun reviewDao(): ReviewDao
     abstract fun cartDao(): CartDao
+    abstract fun userDao(): UserDao // <-- DAO AÑADIDO
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -27,17 +34,14 @@ abstract class AppDatabase : RoomDatabase() {
                     "product.db"
                 )
                     .fallbackToDestructiveMigration()
-                    .addCallback(AppDatabaseCallback()) // El callback sigue aquí
+                    .addCallback(AppDatabaseCallback())
                     .build()
                     .also { INSTANCE = it }
             }
         
-        // El callback ahora accede a la instancia de forma segura
         private class AppDatabaseCallback : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
-
-                // La lógica de la corutina se mantiene, pero la obtención de la instancia es más segura
                 CoroutineScope(Dispatchers.IO).launch {
                     INSTANCE?.let { database ->
                         database.productDao().insertar(PREPOPULATE_DATA)
@@ -46,7 +50,6 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        // Tu lista de productos no ha cambiado
         private val PREPOPULATE_DATA = listOf(
             ProductEntity("JM001","Juegos de Mesa","Catan",29990,"Un clásico juego de estrategia donde los jugadores compiten por colonizar y expandirse en la isla de Catan. Ideal para 3-4 jugadores y perfecto para noches de juego en familia o con amigos.",R.drawable.catan),
             ProductEntity("JM002","Juegos de Mesa","Carcassonne",24990,"Un juego de colocación de fichas donde los jugadores construyen el paisaje alrededor de la fortaleza medieval de Carcassonne. Ideal para 2-5 jugadores y fácil de aprender.",R.drawable.carcassonne),

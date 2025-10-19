@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -17,17 +18,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.levelupgamer.ui.navigation.AppScreens
 import com.example.tiendalvlupgamer.model.LoginUiState
+import com.example.tiendalvlupgamer.model.local.AppDatabase
 import com.example.tiendalvlupgamer.viewmodel.LoginViewModel
+import com.example.tiendalvlupgamer.viewmodel.LoginViewModelFactory
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-
 
 @Composable
 fun LoginScreen(
     navController: NavController,
-    viewModel: LoginViewModel = viewModel(),
     onLogin: (LoginUiState) -> Unit = {}
 ) {
+    val userDao = AppDatabase.get(LocalContext.current).userDao()
+    val viewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(userDao))
     val uiState = viewModel.uiState
     var showPassword by remember { mutableStateOf(false) }
     val yellow = Color(0xFFFFC400)
@@ -151,8 +155,8 @@ fun LoginScreen(
             Button(
                 onClick = {
                     viewModel.tryLogin {
-                        navController.navigate("welcome") {
-                            popUpTo("login") { inclusive = true }
+                        navController.navigate(AppScreens.WelcomeScreen.route) {
+                            popUpTo(AppScreens.LoginScreen.route) { inclusive = true }
                         }
                     }
                 },
@@ -182,7 +186,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             TextButton(
-                onClick = { navController.navigate("register") }
+                onClick = { navController.navigate(AppScreens.RegisterScreen.route) }
             ) {
                 Text(
                     text = "¿No tienes cuenta? Regístrate",

@@ -59,17 +59,21 @@ import java.io.File
 import android.app.Activity
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import com.example.levelupgamer.ui.navigation.AppScreens
+import com.example.tiendalvlupgamer.model.local.AppDatabase
+import com.example.tiendalvlupgamer.viewmodel.RegisterViewModelFactory
 
 
 @Composable
 fun RegisterScreen(
     navController: NavController,
-    viewModel: RegisterViewModel = viewModel(),
     onRegister: (RegisterUiState) -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val userDao = AppDatabase.get(context).userDao()
+    val viewModel: RegisterViewModel = viewModel(factory = RegisterViewModelFactory(userDao))
     val uiState = viewModel.uiState
     var showPassword by remember { mutableStateOf(false) }
-    val context = LocalContext.current
     val calendar = Calendar.getInstance()
     val yellow = Color(0xFFFFC400)
     val cropLauncher = rememberLauncherForActivityResult(
@@ -306,7 +310,10 @@ fun RegisterScreen(
             Button(
                 onClick = {
                     viewModel.tryRegister {
-                        // Navegar a la pantalla de login o mostrar mensaje de éxito
+                        // Navegar a la pantalla de login y limpiar el stack
+                        navController.navigate(AppScreens.LoginScreen.route) {
+                            popUpTo(AppScreens.RegisterScreen.route) { inclusive = true }
+                        }
                     }
                 },
                 modifier = Modifier
