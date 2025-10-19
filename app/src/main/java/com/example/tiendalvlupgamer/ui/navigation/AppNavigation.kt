@@ -17,6 +17,7 @@ import androidx.navigation.navArgument
 import com.example.levelupgamer.ui.components.AppBottomBar
 import com.example.levelupgamer.ui.navigation.AppScreens
 import com.example.tiendalvlupgamer.ui.screens.CartScreen
+import com.example.tiendalvlupgamer.ui.screens.ProfileScreen
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,6 +46,10 @@ fun AppNavigation() {
 
             composable(AppScreens.CartScreen.route) {
                 CartScreen(navController)
+            }
+
+            composable(AppScreens.ProfileScreen.route) {
+                ProfileScreen(navController)
             }
 
             composable(

@@ -26,8 +26,8 @@ sealed class BottomBarScreen(
 ) {
     object Home : BottomBarScreen(AppScreens.HomeScreen.route, "Inicio", Icons.Default.Home)
     object Search : BottomBarScreen(AppScreens.SearchScreen.route, "Buscar", Icons.Default.Search)
-    object Profile : BottomBarScreen("profile", "Perfil", Icons.Default.Person) // Aún no implementado
-    object Cart : BottomBarScreen(AppScreens.CartScreen.route, "Carrito", Icons.Default.ShoppingCart) // <-- ¡CORREGIDO!
+    object Profile : BottomBarScreen(AppScreens.ProfileScreen.route, "Perfil", Icons.Default.Person) // <-- ¡CORREGIDO!
+    object Cart : BottomBarScreen(AppScreens.CartScreen.route, "Carrito", Icons.Default.ShoppingCart)
     object Menu : BottomBarScreen("menu", "Mas", Icons.Default.Menu) // Aún no implementado
 }
 
