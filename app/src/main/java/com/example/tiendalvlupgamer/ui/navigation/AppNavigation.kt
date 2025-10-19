@@ -22,6 +22,7 @@ import com.example.tiendalvlupgamer.view.WelcomeScreen
 import com.example.tiendalvlupgamer.ui.screens.HomeScreen
 import com.example.tiendalvlupgamer.ui.screens.ProductDetailScreen
 import com.example.tiendalvlupgamer.ui.screens.CartScreen
+import com.example.tiendalvlupgamer.ui.screens.MenuScreen
 import com.example.tiendalvlupgamer.ui.screens.ProfileScreen
 import com.example.tiendalvlupgamer.ui.screens.SearchScreen
 
@@ -36,7 +37,8 @@ fun AppNavigation() {
         AppScreens.HomeScreen.route,
         AppScreens.SearchScreen.route,
         AppScreens.CartScreen.route,
-        AppScreens.ProfileScreen.route
+        AppScreens.ProfileScreen.route,
+        AppScreens.MenuScreen.route // <-- RUTA AÑADIDA
     )
 
     Scaffold(
@@ -57,7 +59,6 @@ fun AppNavigation() {
                     onNavigateRegister = { navController.navigate(AppScreens.RegisterScreen.route) },
                     onNavigateLogin = { navController.navigate(AppScreens.LoginScreen.route) },
                     onNavigateGuest = {
-                        // ¡CORREGIDO! Limpiamos la sesión antes de navegar.
                         SessionManager.logout()
                         navController.navigate(AppScreens.HomeScreen.route) {
                             popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
@@ -91,6 +92,9 @@ fun AppNavigation() {
             }
             composable(AppScreens.ProfileScreen.route) {
                 ProfileScreen(navController)
+            }
+            composable(AppScreens.MenuScreen.route) { // <-- COMPOSABLE AÑADIDO
+                MenuScreen(navController)
             }
             composable(
                 route = AppScreens.ProductDetailScreen.route,
