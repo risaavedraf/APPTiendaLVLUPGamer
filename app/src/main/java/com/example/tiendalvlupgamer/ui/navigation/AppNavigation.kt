@@ -19,12 +19,7 @@ import com.example.tiendalvlupgamer.util.SessionManager
 import com.example.tiendalvlupgamer.view.LoginScreen
 import com.example.tiendalvlupgamer.view.RegisterScreen
 import com.example.tiendalvlupgamer.view.WelcomeScreen
-import com.example.tiendalvlupgamer.ui.screens.HomeScreen
-import com.example.tiendalvlupgamer.ui.screens.ProductDetailScreen
-import com.example.tiendalvlupgamer.ui.screens.CartScreen
-import com.example.tiendalvlupgamer.ui.screens.MenuScreen
-import com.example.tiendalvlupgamer.ui.screens.ProfileScreen
-import com.example.tiendalvlupgamer.ui.screens.SearchScreen
+import com.example.tiendalvlupgamer.ui.screens.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,7 +33,7 @@ fun AppNavigation() {
         AppScreens.SearchScreen.route,
         AppScreens.CartScreen.route,
         AppScreens.ProfileScreen.route,
-        AppScreens.MenuScreen.route // <-- RUTA AÑADIDA
+        AppScreens.MenuScreen.route
     )
 
     Scaffold(
@@ -81,21 +76,13 @@ fun AppNavigation() {
             }
 
             // --- FLUJO PRINCIPAL DE LA APP ---
-            composable(AppScreens.HomeScreen.route) {
-                HomeScreen(navController)
-            }
-            composable(AppScreens.SearchScreen.route) {
-                SearchScreen(navController)
-            }
-            composable(AppScreens.CartScreen.route) {
-                CartScreen(navController)
-            }
-            composable(AppScreens.ProfileScreen.route) {
-                ProfileScreen(navController)
-            }
-            composable(AppScreens.MenuScreen.route) { // <-- COMPOSABLE AÑADIDO
-                MenuScreen(navController)
-            }
+            composable(AppScreens.HomeScreen.route) { HomeScreen(navController) }
+            composable(AppScreens.SearchScreen.route) { SearchScreen(navController) }
+            composable(AppScreens.CartScreen.route) { CartScreen(navController) }
+            composable(AppScreens.ProfileScreen.route) { ProfileScreen(navController) }
+            composable(AppScreens.MenuScreen.route) { MenuScreen(navController) }
+            composable(AppScreens.EventsScreen.route) { EventsScreen(navController) }
+
             composable(
                 route = AppScreens.ProductDetailScreen.route,
                 arguments = listOf(navArgument("productId") { type = NavType.StringType })
@@ -103,6 +90,15 @@ fun AppNavigation() {
                 val productId = backStackEntry.arguments?.getString("productId")
                 requireNotNull(productId)
                 ProductDetailScreen(navController = navController, productId = productId)
+            }
+
+            composable(
+                route = AppScreens.EventDetailScreen.route,
+                arguments = listOf(navArgument("eventId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val eventId = backStackEntry.arguments?.getString("eventId")
+                requireNotNull(eventId)
+                EventDetailScreen(navController = navController, eventId = eventId)
             }
         }
     }

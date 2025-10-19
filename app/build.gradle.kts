@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    // CONFLICTO RESUELTO: Se adopta KSP, que es más moderno que KAPT.
     id("com.google.devtools.ksp")
 }
 
@@ -42,7 +41,6 @@ android {
 }
 
 dependencies {
-    // CONFLICTO RESUELTO: Dependencias unificadas y limpiadas.
     val roomVersion = "2.6.1"
     val lifecycleVersion = "2.8.6"
     val activityCompose = "1.9.3"
@@ -69,14 +67,18 @@ dependencies {
     // Base de datos Room (usando KSP)
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
-    ksp("androidx.room:room-compiler:$roomVersion") // Se usa KSP en lugar de KAPT
+    ksp("androidx.room:room-compiler:$roomVersion")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
-    // Librerías de imágenes (añadidas desde la branch de login)
+    // Librerías de imágenes
     implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("com.github.yalantis:ucrop:2.2.8")
+
+    // Google Maps para Compose (ELIMINADAS)
+    // implementation("com.google.maps.android:maps-compose:4.3.3")
+    // implementation("com.google.android.gms:play-services-maps:18.2.0")
 
     // Dependencias de Testing
     testImplementation(libs.junit)

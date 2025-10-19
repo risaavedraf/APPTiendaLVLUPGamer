@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.ListAlt
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Payment
@@ -38,7 +39,6 @@ fun MenuScreen(navController: NavController) {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // --- ENCABEZADO DE LA PANTALLA ---
         TopAppBar(
             title = { Text("Menú", fontWeight = FontWeight.Bold) },
             colors = TopAppBarDefaults.topAppBarColors(
@@ -47,12 +47,19 @@ fun MenuScreen(navController: NavController) {
             )
         )
 
-        // --- LISTA DE OPCIONES ---
         LazyColumn(
-            modifier = Modifier.weight(1f), // Ocupa todo el espacio disponible
+            modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
-            // Grupos de menú...
+            item { MenuHeader(title = "Comunidad") }
+            item {
+                MenuRow(
+                    icon = Icons.Filled.EmojiEvents,
+                    title = "Eventos",
+                    onClick = { navController.navigate(AppScreens.EventsScreen.route) }
+                )
+            }
+
             item { MenuHeader(title = "Mi Cuenta") }
             item { MenuRow(icon = Icons.AutoMirrored.Filled.ListAlt, title = "Mis Pedidos") { /* TODO */ } }
             item { MenuRow(icon = Icons.Filled.Room, title = "Direcciones de Envío") { /* TODO */ } }
@@ -68,17 +75,13 @@ fun MenuScreen(navController: NavController) {
             item { MenuRow(icon = Icons.Filled.Policy, title = "Términos y Condiciones") { /* TODO */ } }
         }
 
-        // --- BOTÓN DE SESIÓN (DINÁMICO) ---
-        Spacer(modifier = Modifier.height(8.dp))
         val (buttonText, buttonColor, onButtonClick) = if (user == null) {
-            // Estado: Invitado
             Triple("Iniciar Sesión / Registrarse", MaterialTheme.colorScheme.primary) {
                 navController.navigate(AppScreens.WelcomeScreen.route) {
                     popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
                 }
             }
         } else {
-            // Estado: Sesión iniciada
             Triple("Cerrar Sesión", MaterialTheme.colorScheme.error) {
                 SessionManager.logout()
                 navController.navigate(AppScreens.WelcomeScreen.route) {
@@ -89,9 +92,7 @@ fun MenuScreen(navController: NavController) {
 
         Button(
             onClick = onButtonClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             colors = ButtonDefaults.buttonColors(containerColor = buttonColor)
         ) {
             Text(buttonText)
@@ -99,7 +100,6 @@ fun MenuScreen(navController: NavController) {
     }
 }
 
-// --- COMPOSABLES AUXILIARES (SIN CAMBIOS) ---
 @Composable
 private fun MenuHeader(title: String) {
     Text(
