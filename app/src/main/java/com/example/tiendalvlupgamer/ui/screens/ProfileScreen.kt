@@ -1,5 +1,6 @@
 package com.example.tiendalvlupgamer.ui.screens
 
+import android.util.Base64
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,16 +16,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.net.toUri
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import coil.compose.rememberAsyncImagePainter
 import com.example.levelupgamer.ui.navigation.AppScreens
-import com.example.tiendalvlupgamer.data.entity.User
+import com.example.tiendalvlupgamer.model.UsuarioResponse
 import com.example.tiendalvlupgamer.util.SessionManager
 
 @Composable
@@ -38,19 +39,17 @@ fun ProfileScreen(navController: NavController) {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // El contenido de la pantalla cambia en función de si el usuario es nulo o no.
         if (user == null) {
-            GuestProfileView() // Vista para invitados
+            GuestProfileView() 
         } else {
             UserProfileView(user!!, onLogout = {
                 SessionManager.logout()
-                // Navegar de vuelta a la WelcomeScreen y limpiar el historial.
                 navController.navigate(AppScreens.WelcomeScreen.route) {
                     popUpTo(navController.graph.findStartDestination().id) {
                         inclusive = true
                     }
                 }
-            }) // Vista para usuarios con sesión iniciada
+            })
         }
     }
 }
@@ -83,7 +82,7 @@ private fun GuestProfileView() {
 }
 
 @Composable
-private fun UserProfileView(user: User, onLogout: () -> Unit) {
+private fun UserProfileView(user: UsuarioResponse, onLogout: () -> Unit) {
     val yellow = Color(0xFFFFC400)
 
     Column(
@@ -92,21 +91,32 @@ private fun UserProfileView(user: User, onLogout: () -> Unit) {
     ) {
         Spacer(modifier = Modifier.height(32.dp))
 
-        // --- FOTO DE PERFIL (CORREGIDA) ---
-        // Como la entidad User no tiene imagen, mostramos siempre el icono genérico.
-        Icon(
-            imageVector = Icons.Default.Person,
-            contentDescription = "Foto de perfil",
-            modifier = Modifier
-                .size(120.dp)
-                .clip(CircleShape)
-                .border(2.dp, yellow, CircleShape),
-            tint = MaterialTheme.colorScheme.primary
-        )
+        if (user.profileImageBase64 != null) {
+            val imageBytes = Base64.decode(user.profileImageBase64, Base64.DEFAULT)
+            val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = "Foto de perfil",
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, yellow, CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = "Foto de perfil",
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, yellow, CircleShape),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // --- NOMBRE COMPLETO ---
         Text(
             text = "${user.name} ${user.lastName}",
             style = MaterialTheme.typography.headlineSmall,
@@ -115,7 +125,6 @@ private fun UserProfileView(user: User, onLogout: () -> Unit) {
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // --- USERNAME ---
         Text(
             text = "@${user.username}",
             style = MaterialTheme.typography.bodyLarge,
@@ -125,19 +134,17 @@ private fun UserProfileView(user: User, onLogout: () -> Unit) {
         Spacer(modifier = Modifier.height(24.dp))
         Divider()
 
-        // --- INFORMACIÓN DETALLADA ---
         Column(
             modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             InfoRow(label = "Correo Electrónico", value = user.email)
-            InfoRow(label = "Fecha de Nacimiento", value = user.birthDate ?: "No especificada")
+            InfoRow(label = "Fecha de Nacimiento", value = user.birthDate?.toString() ?: "No especificada")
         }
 
         Divider()
-        Spacer(modifier = Modifier.weight(1f)) // Empuja el botón de logout hacia abajo
+        Spacer(modifier = Modifier.weight(1f))
 
-        // --- BOTÓN DE CERRAR SESIÓN ---
         Button(
             onClick = onLogout,
             modifier = Modifier
