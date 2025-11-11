@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.levelupgamer.ui.navigation.AppScreens
+import com.example.tiendalvlupgamer.ui.navigation.AppScreens
 import com.example.tiendalvlupgamer.model.LoginUiState
 import com.example.tiendalvlupgamer.model.local.AppDatabase
 import com.example.tiendalvlupgamer.viewmodel.LoginViewModel

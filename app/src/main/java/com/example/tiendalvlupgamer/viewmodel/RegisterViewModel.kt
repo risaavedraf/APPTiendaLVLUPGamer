@@ -78,16 +78,18 @@ class RegisterViewModel(private val userDao: UserDao, private val authRepository
         val usernameErr = ValidationHelper.validateUsername(uiState.username)
         val emailErr = ValidationHelper.validateEmail(uiState.email)
         val passwordErr = ValidationHelper.validatePassword(uiState.password)
+        val birthDateErr = ValidationHelper.validateDate(uiState.birthDate, "dd/MM/yyyy")
 
         uiState = uiState.copy(
             nameError = nameErr,
             lastNameError = lastNameErr,
             usernameError = usernameErr,
             emailError = emailErr,
-            passwordError = passwordErr
+            passwordError = passwordErr,
+            birthDateError = birthDateErr
         )
 
-        return nameErr ?: lastNameErr ?: usernameErr ?: emailErr ?: passwordErr
+        return nameErr ?: lastNameErr ?: usernameErr ?: emailErr ?: passwordErr ?: birthDateErr
     }
 
     fun tryRegister(onSuccess: () -> Unit) {
@@ -107,7 +109,11 @@ class RegisterViewModel(private val userDao: UserDao, private val authRepository
                     val date = inputFormat.parse(uiState.birthDate)
                     outputFormat.format(date!!)
                 } catch (e: Exception) {
-                    uiState.birthDate // fallback to original if format fails
+                    uiState = uiState.copy(
+                        loading = false,
+                        error = "Formato de fecha inválido. Use dd/MM/yyyy"
+                    )
+                    return@launch
                 }
 
                 val request = RegistroRequest(

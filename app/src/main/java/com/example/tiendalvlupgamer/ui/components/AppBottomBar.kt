@@ -1,4 +1,4 @@
-package com.example.levelupgamer.ui.components
+package com.example.tiendalvlupgamer.ui.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.levelupgamer.ui.navigation.AppScreens
+import com.example.tiendalvlupgamer.ui.navigation.AppScreens
 
 sealed class BottomBarScreen(
     val route: String,

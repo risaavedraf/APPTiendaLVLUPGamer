@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -59,7 +61,7 @@ import java.io.File
 import android.app.Activity
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import com.example.levelupgamer.ui.navigation.AppScreens
+import com.example.tiendalvlupgamer.ui.navigation.AppScreens
 import com.example.tiendalvlupgamer.model.local.AppDatabase
 import com.example.tiendalvlupgamer.viewmodel.RegisterViewModelFactory
 
@@ -76,25 +78,23 @@ fun RegisterScreen(
     var showPassword by remember { mutableStateOf(false) }
     val calendar = Calendar.getInstance()
     val yellow = Color(0xFFFFC400)
+
+    // --- Manejo de la selección y recorte de imagen ---
     val cropLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            val uri = UCrop.getOutput(result.data!!)
-            uri?.let { viewModel.onProfileImageChange(it) }
+        if (result.resultCode == Activity.RESULT_OK) {
+            UCrop.getOutput(result.data!!)?.let { viewModel.onProfileImageChange(it) }
         }
     }
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            val destinationUri = Uri.fromFile(
-                File(context.cacheDir, "cropped_profile_${System.currentTimeMillis()}.jpg")
-            )
-
+            val destinationUri = Uri.fromFile(File(context.cacheDir, "cropped_profile_${System.currentTimeMillis()}.jpg"))
             val options = UCrop.Options().apply {
                 setCompressionQuality(90)
-                setCircleDimmedLayer(true) // Crop circular como WhatsApp
+                setCircleDimmedLayer(true)
                 setShowCropGrid(false)
                 setShowCropFrame(false)
                 setHideBottomControls(false)
@@ -104,62 +104,54 @@ fun RegisterScreen(
                 setStatusBarColor(android.graphics.Color.parseColor("#FFC400"))
                 setActiveControlsWidgetColor(android.graphics.Color.parseColor("#FFC400"))
             }
-
-            val uCrop = UCrop.of(it, destinationUri)
-                .withAspectRatio(1f, 1f)
-                .withMaxResultSize(800, 800)
-                .withOptions(options)
-
+            val uCrop = UCrop.of(it, destinationUri).withAspectRatio(1f, 1f).withMaxResultSize(800, 800).withOptions(options)
             cropLauncher.launch(uCrop.getIntent(context))
         }
     }
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
-        if (isGranted) {
-            imagePickerLauncher.launch("image/*")
-        }
+        if (isGranted) imagePickerLauncher.launch("image/*")
     }
 
-
-
-
+    // --- Lógica del DatePicker ---
     fun showDatePicker() {
         val year = calendar.get(Calendar.YEAR)
         val month = calendar.get(Calendar.MONTH)
         val day = calendar.get(Calendar.DAY_OF_MONTH)
-        DatePickerDialog(context, { _: DatePicker, y: Int, m: Int, d: Int ->
+        DatePickerDialog(context, { _, y: Int, m: Int, d: Int ->
             val formatted = "%02d/%02d/%04d".format(d, m + 1, y)
             viewModel.onBirthDateChange(formatted)
         }, year, month, day).show()
     }
 
+    // --- UI de la Pantalla ---
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(modifier = Modifier.fillMaxSize()){
+            // Botón de retroceso
             IconButton(
                 onClick = { navController.popBackStack() },
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(16.dp)
+                modifier = Modifier.align(Alignment.TopStart).padding(16.dp)
             ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Volver",
-                    tint = yellow
-                )
+                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = yellow)
             }
         }
+
+        // Columna principal que ahora es SCROLLEABLE
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState()), // <-- ¡AQUÍ ESTÁ LA MAGIA!
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(64.dp)) // Espacio superior para que no se pegue al botón de atrás
+
             Text(text = "Crear cuenta", style = MaterialTheme.typography.headlineSmall, color = Color.Black)
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Selector de foto de perfil
             Box(
                 modifier = Modifier
                     .size(100.dp)
@@ -177,97 +169,45 @@ fun RegisterScreen(
                     Image(
                         painter = rememberAsyncImagePainter(uiState.profileImageUri),
                         contentDescription = "Foto de perfil",
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .border(2.dp, yellow, CircleShape),
-                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                        modifier = Modifier.size(96.dp).clip(CircleShape).border(2.dp, yellow, CircleShape),
+                        contentScale = ContentScale.Crop
                     )
                 } else {
-                    Icon(
-                        imageVector = Icons.Filled.Person,
-                        contentDescription = "Seleccionar foto",
-                        modifier = Modifier.size(50.dp),
-                        tint = yellow
-                    )
+                    Icon(imageVector = Icons.Filled.Person, contentDescription = "Seleccionar foto", modifier = Modifier.size(50.dp), tint = yellow)
                 }
             }
+            Text(text = "Toca para seleccionar foto", style = MaterialTheme.typography.bodySmall, color = Color.Gray, modifier = Modifier.padding(top = 4.dp))
 
-            Text(
-                text = "Toca para seleccionar foto",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray,
-                modifier = Modifier.padding(top = 4.dp)
-            )
+            Spacer(modifier = Modifier.height(16.dp))
 
-            LabeledTextField(
-                value = uiState.name,
-                onValueChange = viewModel::onNameChange,
-                label = "Nombre",
-                modifier = Modifier.fillMaxWidth(0.9f),
-                focusColor = yellow,
-                error = uiState.nameError
-            )
-
+            // Campos del formulario
+            LabeledTextField(value = uiState.name, onValueChange = viewModel::onNameChange, label = "Nombre", modifier = Modifier.fillMaxWidth(0.9f), focusColor = yellow, error = uiState.nameError)
+            Spacer(modifier = Modifier.height(8.dp))
+            LabeledTextField(value = uiState.lastName, onValueChange = viewModel::onLastNameChange, label = "Apellido", modifier = Modifier.fillMaxWidth(0.9f), focusColor = yellow, error = uiState.lastNameError)
+            Spacer(modifier = Modifier.height(8.dp))
+            LabeledTextField(value = uiState.username, onValueChange = viewModel::onUsernameChange, label = "Username", modifier = Modifier.fillMaxWidth(0.9f), focusColor = yellow, error = uiState.usernameError)
             Spacer(modifier = Modifier.height(8.dp))
 
-            LabeledTextField(
-                value = uiState.lastName,
-                onValueChange = viewModel::onLastNameChange,
-                label = "Apellido",
-                modifier = Modifier.fillMaxWidth(0.9f),
-                focusColor = yellow,
-                error = uiState.lastNameError
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            LabeledTextField(
-                value = uiState.username,
-                onValueChange = viewModel::onUsernameChange,
-                label = "Username",
-                modifier = Modifier.fillMaxWidth(0.9f),
-                focusColor = yellow,
-                error = uiState.usernameError
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
+            // Campo de fecha de nacimiento
             OutlinedTextField(
                 value = uiState.birthDate,
                 onValueChange = { },
                 label = { Text("Fecha de nacimiento") },
                 readOnly = true,
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .clickable { showDatePicker() },
+                modifier = Modifier.fillMaxWidth(0.9f).clickable { showDatePicker() },
                 trailingIcon = {
                     IconButton(onClick = { showDatePicker() }) {
                         Icon(imageVector = Icons.Filled.DateRange, contentDescription = "Seleccionar fecha")
                     }
                 },
-                colors = TextFieldDefaults.colors(
-                    focusedIndicatorColor = yellow,
-                    unfocusedIndicatorColor = Color.Gray,
-                    focusedLabelColor = yellow,
-                    unfocusedLabelColor = Color.Gray,
-                    cursorColor = yellow
-                )
+                colors = TextFieldDefaults.colors(focusedIndicatorColor = yellow, unfocusedIndicatorColor = Color.Gray, focusedLabelColor = yellow, unfocusedLabelColor = Color.Gray, cursorColor = yellow)
             )
-
             Spacer(modifier = Modifier.height(8.dp))
 
-            LabeledTextField(
-                value = uiState.email,
-                onValueChange = viewModel::onEmailChange,
-                label = "Correo",
-                modifier = Modifier.fillMaxWidth(0.9f),
-                focusColor = yellow,
-                error = uiState.emailError
-            )
-
+            LabeledTextField(value = uiState.email, onValueChange = viewModel::onEmailChange, label = "Correo", modifier = Modifier.fillMaxWidth(0.9f), focusColor = yellow, error = uiState.emailError)
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Campo de contraseña
             Column(modifier = Modifier.fillMaxWidth(0.9f)) {
                 OutlinedTextField(
                     value = uiState.password,
@@ -276,49 +216,34 @@ fun RegisterScreen(
                     singleLine = true,
                     visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    trailingIcon = {
-                        IconButton(onClick = { showPassword = !showPassword }) { }
-                    },
+                    trailingIcon = { IconButton(onClick = { showPassword = !showPassword }) {} },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.colors(
-                        focusedIndicatorColor = yellow,
-                        unfocusedIndicatorColor = Color.Gray,
-                        focusedLabelColor = yellow,
-                        unfocusedLabelColor = Color.Gray,
-                        cursorColor = yellow
-                    ),
+                    colors = TextFieldDefaults.colors(focusedIndicatorColor = yellow, unfocusedIndicatorColor = Color.Gray, focusedLabelColor = yellow, unfocusedLabelColor = Color.Gray, cursorColor = yellow),
                     isError = uiState.passwordError != null
                 )
-
-                // Mostrar requisitos solo cuando el campo tiene foco o contenido
                 if (uiState.password.isNotEmpty()) {
-                    PasswordRequirements(
-                        password = uiState.password,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
+                    PasswordRequirements(password = uiState.password, modifier = Modifier.padding(top = 4.dp))
                 }
             }
 
-            val error = uiState.error
-            if (error != null) {
+            if (uiState.error != null) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                Text(text = uiState.error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // Botón de registrar
             Button(
                 onClick = {
                     viewModel.tryRegister {
-                        // Navegar a la pantalla de login y limpiar el stack
                         navController.navigate(AppScreens.LoginScreen.route) {
-                            popUpTo(AppScreens.RegisterScreen.route) { inclusive = true }
+                            popUpTo(navController.graph.startDestinationId)
+                            launchSingleTop = true
                         }
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .height(48.dp),
+                modifier = Modifier.fillMaxWidth(0.9f).height(48.dp),
                 enabled = !uiState.loading,
                 colors = ButtonDefaults.buttonColors(containerColor = yellow, contentColor = Color.Black)
             ) {
@@ -328,6 +253,7 @@ fun RegisterScreen(
                     Text(text = "Registrar", style = MaterialTheme.typography.bodyLarge)
                 }
             }
+            Spacer(modifier = Modifier.height(32.dp)) // Espacio inferior para que el scroll tenga margen
         }
     }
 }
@@ -348,26 +274,16 @@ fun LabeledTextField(
             label = { Text(label) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = focusColor,
-                unfocusedIndicatorColor = Color.Gray,
-                focusedLabelColor = focusColor,
-                unfocusedLabelColor = Color.Gray,
-                cursorColor = focusColor
-            ),
+            colors = TextFieldDefaults.colors(focusedIndicatorColor = focusColor, unfocusedIndicatorColor = Color.Gray, focusedLabelColor = focusColor, unfocusedLabelColor = Color.Gray, cursorColor = focusColor),
             isError = error != null
         )
 
         if (error != null) {
-            Text(
-                text = error,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
-            )
+            Text(text = error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 16.dp, top = 4.dp))
         }
     }
 }
+
 @Composable
 fun PasswordRequirements(
     password: String,
@@ -402,5 +318,3 @@ fun PasswordRequirements(
         }
     }
 }
-
-

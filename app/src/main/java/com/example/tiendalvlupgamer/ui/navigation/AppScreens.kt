@@ -1,4 +1,4 @@
-package com.example.levelupgamer.ui.navigation
+package com.example.tiendalvlupgamer.ui.navigation
 
 // ui/navigation/AppScreens.kt
 sealed class AppScreens(val route: String) {

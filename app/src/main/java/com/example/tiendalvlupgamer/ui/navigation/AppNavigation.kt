@@ -13,8 +13,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.levelupgamer.ui.components.AppBottomBar
-import com.example.levelupgamer.ui.navigation.AppScreens
+import com.example.tiendalvlupgamer.ui.components.AppBottomBar
+import com.example.tiendalvlupgamer.ui.navigation.AppScreens
 import com.example.tiendalvlupgamer.util.SessionManager
 import com.example.tiendalvlupgamer.view.LoginScreen
 import com.example.tiendalvlupgamer.view.RegisterScreen

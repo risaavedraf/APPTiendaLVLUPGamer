@@ -1,8 +1,8 @@
 // En: ui/components/ProductCard.kt
 
-package com.example.levelupgamer.ui.components
+package com.example.tiendalvlupgamer.ui.components
 
-import android.R
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -22,9 +22,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.width
+
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.style.TextOverflow
+
 import com.example.tiendalvlupgamer.model.local.ProductEntity
 import java.nio.file.WatchEvent
 import java.text.NumberFormat
