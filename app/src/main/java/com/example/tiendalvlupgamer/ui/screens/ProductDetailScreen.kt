@@ -1,21 +1,9 @@
 package com.example.tiendalvlupgamer.ui.screens
 
 import android.widget.Toast
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,46 +15,24 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarOutline
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.tiendalvlupgamer.model.local.AppDatabase
-import com.example.tiendalvlupgamer.model.local.ReviewEntity
-import com.example.tiendalvlupgamer.viewmodel.ProductViewModel
-import com.example.tiendalvlupgamer.viewmodel.ProductViewModelFactory
-import com.example.tiendalvlupgamer.viewmodel.CartViewModel
-import com.example.tiendalvlupgamer.viewmodel.CartViewModelFactory
+import com.example.tiendalvlupgamer.data.network.RetrofitClient
+import com.example.tiendalvlupgamer.data.repository.ProductoRepository
+import com.example.tiendalvlupgamer.ui.components.NetworkImage
+import com.example.tiendalvlupgamer.viewmodel.ProductoViewModel
+import com.example.tiendalvlupgamer.viewmodel.ProductoViewModelFactory
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -74,40 +40,31 @@ import java.util.Locale
 @Composable
 fun ProductDetailScreen(navController: NavController, productId: String) {
     val context = LocalContext.current
-    // Obtenemos ambos DAOs
-    val db = AppDatabase.get(context)
-    val productDao = db.productDao()
-    val reviewDao = db.reviewDao()
-    val cartDao = db.cartDao()
 
-    // Usamos la Factory actualizada
-    val productViewModel: ProductViewModel = viewModel(factory = ProductViewModelFactory(productDao, reviewDao))
-    val cartViewModel: CartViewModel = viewModel(factory = CartViewModelFactory(cartDao))
+    // 1. Inyectar el ViewModel correcto que usa el Repository de Red
+    val viewModel: ProductoViewModel = viewModel(
+        factory = ProductoViewModelFactory(ProductoRepository(RetrofitClient.productoApiService))
+    )
 
-
+    // 2. Obtener datos de la red
     LaunchedEffect(productId) {
-        productViewModel.getProductById(productId)
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            productViewModel.clearSelectedProduct()
+        productId.toLongOrNull()?.let {
+            viewModel.getProductoById(it)
         }
     }
 
-    val product by productViewModel.selectedProduct.collectAsState()
+    val product by viewModel.productoDetail.observeAsState()
+    val isLoading by viewModel.isLoading.observeAsState(false)
+
     var quantity by remember { mutableStateOf(1) }
 
-    // Estado para la nueva reseña
-    val reviews by productViewModel.reviewsForProduct.collectAsState()
-    var userRating by remember { mutableStateOf(0) }
-    var userComment by remember { mutableStateOf("") }
-
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .background(MaterialTheme.colorScheme.background)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
         TopAppBar(
-            title = { Text(product?.name ?: "Detalle del Producto") },
+            title = { Text(product?.nombre ?: "Detalle del Producto") },
             navigationIcon = {
                 IconButton(onClick = { navController.popBackStack() }) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
@@ -115,46 +72,55 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
             }
         )
 
-        if (product == null) {
+        if (isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
+        } else if (product == null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Producto no encontrado")
+            }
         } else {
+            val currentProduct = product!!
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
-                // --- SECCIÓN DE DETALLES DEL PRODUCTO (SIN CAMBIOS) ---
-                val painter: Painter = painterResource(id = product!!.image)
-                val aspectRatio = painter.intrinsicSize.width / painter.intrinsicSize.height
-                Image(
-                    painter = painter,
-                    contentDescription = product!!.name,
+                // 4. Adaptar la UI para usar NetworkImage
+                NetworkImage(
+                    imageUrl = currentProduct.imagenUrl,
+                    contentDescription = currentProduct.nombre,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(aspectRatio)
+                        .aspectRatio(1f)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.secondaryContainer),
-                    contentScale = ContentScale.FillBounds
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                 )
+
                 Spacer(modifier = Modifier.height(16.dp))
+
                 Text(
-                    text = product!!.name,
+                    text = currentProduct.nombre,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 val format = NumberFormat.getCurrencyInstance(Locale("es", "CL"))
                 format.maximumFractionDigits = 0
-                val formattedPrice = format.format(product!!.price)
+                val formattedPrice = format.format(currentProduct.price)
                 Text(
                     text = formattedPrice,
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.primary
                 )
+
                 Spacer(modifier = Modifier.height(24.dp))
+
+                // --- Lógica de Carrito y Cantidad (Preservada por ahora) ---
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -163,34 +129,26 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(
                             onClick = { if (quantity > 1) quantity-- },
-                            modifier = Modifier.background(
-                                MaterialTheme.colorScheme.surfaceVariant,
-                                CircleShape
-                            ),
+                            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
                         ) { Icon(Icons.Default.Remove, contentDescription = "Restar cantidad") }
+                        
                         Text(
                             text = "$quantity",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
+                        
                         IconButton(
                             onClick = { quantity++ },
-                            modifier = Modifier.background(
-                                MaterialTheme.colorScheme.primary,
-                                CircleShape
-                            ),
+                            modifier = Modifier.background(MaterialTheme.colorScheme.primary, CircleShape),
                             colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.onPrimary)
                         ) { Icon(Icons.Default.Add, contentDescription = "Añadir cantidad") }
                     }
                     Button(
                         onClick = {
-                            cartViewModel.addOrUpdateProduct(product!!, quantity)
-                            Toast.makeText(
-                                context,
-                                "$quantity ${product!!.name}(s) agregado(s) al carrito",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            // TODO: Refactorizar la lógica del carrito para que funcione con el nuevo modelo
+                            Toast.makeText(context, "Añadir al carrito (lógica pendiente)", Toast.LENGTH_SHORT).show()
                         },
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -199,25 +157,28 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
                         Text("Añadir")
                     }
                 }
+                // --- FIN Lógica de Carrito ---
+
                 Spacer(modifier = Modifier.height(24.dp))
                 Divider()
                 Spacer(modifier = Modifier.height(16.dp))
+
                 Text(
                     text = "Descripción",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
+
                 Text(
-                    text = product!!.description,
+                    text = currentProduct.descripcion,
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Justify
                 )
+                
                 Spacer(modifier = Modifier.height(24.dp))
-                // --- FIN DE SECCIÓN DE DETALLES ---
 
-
-                // --- INICIO DE LA NUEVA SECCIÓN DE RESEÑAS ---
+                // --- Lógica de Reseñas (Preservada por ahora) ---
                 Divider()
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
@@ -226,129 +187,13 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-
-                // Campo para dejar una reseña
-                OutlinedTextField(
-                    value = userComment,
-                    onValueChange = { userComment = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Escribe tu reseña...") },
-                    maxLines = 4
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Selector de estrellas
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    StarRatingInput(rating = userRating, onRatingChange = { userRating = it })
-                    Button(
-                        onClick = {
-                            if (userRating > 0 && userComment.isNotBlank()) {
-                                productViewModel.addReview(productId, userRating, userComment)
-                                // Limpiar campos después de enviar
-                                userComment = ""
-                                userRating = 0
-                                Toast.makeText(
-                                    context,
-                                    "¡Gracias por tu reseña!",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    "Por favor, añade una calificación y un comentario.",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        },
-                        enabled = userComment.isNotBlank() && userRating > 0 // El botón solo se activa si hay reseña y rating
-                    ) {
-                        Text("Enviar")
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Lista de reseñas existentes
-                if (reviews.isEmpty()) {
-                    Text(
-                        text = "Todavía no hay reseñas para este producto. ¡Sé el primero!",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else {
-                    reviews.forEach { review ->
-                        ReviewItem(review = review)
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-        }
-    }
-}
-
-// --- COMPOSABLES AUXILIARES PARA LAS RESEÑAS ---
-@Composable
-fun StarRatingInput(
-    maxStars: Int = 5,
-    rating: Int,
-    onRatingChange: (Int) -> Unit
-) {
-    Row {
-        for (i in 1..maxStars) {
-            Icon(
-                imageVector = if (i <= rating) Icons.Filled.Star else Icons.Filled.StarOutline,
-                contentDescription = "Estrella $i",
-                modifier = Modifier
-                    .size(36.dp)
-                    .clickable { onRatingChange(i) },
-                tint = if (i <= rating) Color(0xFFFFD700) else MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-fun ReviewItem(review: ReviewEntity) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = review.author,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
+                    text = "La funcionalidad de reseñas se implementará en una futura versión.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                // Muestra las estrellas de la reseña
-                StarRatingDisplay(rating = review.rating)
+                // TODO: Refactorizar la lógica de reseñas para que funcione con el nuevo modelo.
             }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = review.comment,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
-}
-
-@Composable
-fun StarRatingDisplay(maxStars: Int = 5, rating: Int) {
-    Row {
-        for (i in 1..maxStars) {
-            Icon(
-                imageVector = Icons.Filled.Star,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = if (i <= rating) Color(0xFFFFD700) else Color.Gray
-            )
         }
     }
 }

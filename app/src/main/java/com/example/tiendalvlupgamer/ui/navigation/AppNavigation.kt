@@ -14,7 +14,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.tiendalvlupgamer.ui.components.AppBottomBar
-import com.example.tiendalvlupgamer.ui.navigation.AppScreens
 import com.example.tiendalvlupgamer.util.SessionManager
 import com.example.tiendalvlupgamer.view.LoginScreen
 import com.example.tiendalvlupgamer.view.RegisterScreen
@@ -83,6 +82,7 @@ fun AppNavigation() {
             composable(AppScreens.EditProfileScreen.route) { EditProfileScreen(navController) }
             composable(AppScreens.MenuScreen.route) { MenuScreen(navController) }
             composable(AppScreens.EventsScreen.route) { EventsScreen(navController) }
+            composable(AppScreens.DireccionesScreen.route) { DireccionesScreen(navController) }
 
             composable(
                 route = AppScreens.ProductDetailScreen.route,
@@ -100,6 +100,15 @@ fun AppNavigation() {
                 val eventId = backStackEntry.arguments?.getString("eventId")
                 requireNotNull(eventId)
                 EventDetailScreen(navController = navController, eventId = eventId)
+            }
+
+            composable(
+                route = AppScreens.DireccionFormScreen.route,
+                arguments = listOf(navArgument("direccionId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val direccionId = backStackEntry.arguments?.getLong("direccionId")
+                requireNotNull(direccionId)
+                DireccionFormScreen(navController = navController, direccionId = direccionId)
             }
         }
     }

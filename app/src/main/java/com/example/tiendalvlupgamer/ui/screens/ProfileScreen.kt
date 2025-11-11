@@ -54,7 +54,8 @@ fun ProfileScreen(
     val user by SessionManager.currentUser.collectAsState()
     val fullProfile by profileViewModel.profile.observeAsState()
 
-    LaunchedEffect(user) {
+    // Recargar el perfil cuando se vuelve a esta pantalla
+    LaunchedEffect(navController.currentBackStackEntry) {
         if (user != null) {
             profileViewModel.getMyProfile()
         }
@@ -92,14 +93,30 @@ fun ProfileScreen(
                         )
                     }
                 }
+                
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Mis Direcciones", style = MaterialTheme.typography.titleMedium)
+                        TextButton(onClick = { navController.navigate(AppScreens.DireccionesScreen.route) }) {
+                            Text("Gestionar")
+                        }
+                    }
+                }
 
                 if (profile.direcciones.isNotEmpty()) {
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("Mis Direcciones", style = MaterialTheme.typography.titleMedium)
-                    }
                     items(profile.direcciones) { direccion ->
                         DireccionItem(direccion)
+                    }
+                } else {
+                    item {
+                        Text(
+                            text = "No tienes direcciones guardadas.", 
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
                     }
                 }
 

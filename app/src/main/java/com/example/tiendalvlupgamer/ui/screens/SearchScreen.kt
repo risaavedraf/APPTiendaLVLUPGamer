@@ -1,106 +1,110 @@
 package com.example.tiendalvlupgamer.ui.screens
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import android.widget.Toast
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material.icons.Icons
-
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-
-import androidx.compose.material3.MaterialTheme
-
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.tiendalvlupgamer.data.network.RetrofitClient
+import com.example.tiendalvlupgamer.data.repository.ProductoRepository
 import com.example.tiendalvlupgamer.ui.components.ProductCard
 import com.example.tiendalvlupgamer.ui.navigation.AppScreens
-import com.example.tiendalvlupgamer.model.local.AppDatabase
-import com.example.tiendalvlupgamer.viewmodel.ProductViewModel
-import com.example.tiendalvlupgamer.viewmodel.ProductViewModelFactory
+import com.example.tiendalvlupgamer.viewmodel.ProductoViewModel
+import com.example.tiendalvlupgamer.viewmodel.ProductoViewModelFactory
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(navController: NavController) {
-
-
-    val productDao = AppDatabase.get(LocalContext.current).productDao()
-    val reviewDao = AppDatabase.get(LocalContext.current).reviewDao()
-    val viewModel: ProductViewModel = viewModel(factory = ProductViewModelFactory(productDao,reviewDao))
-
-
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val searchResults by viewModel.searchResults.collectAsState()
-
-
-    Column(
-        modifier = Modifier.background(MaterialTheme.colorScheme.background)
-    ) {  TopAppBar(
-        title = {
-            // 2. Campo de texto para la búsqueda
-            TextField(
-                value = searchQuery,
-                onValueChange = { viewModel.onSearchQueryChange(it) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(end = 15.dp),
-
-                placeholder = { Text("Buscar productos...") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Icono de búsqueda"
-                    )
-                },
-                singleLine = true
-            )
-        }
+    // 1. Conectar el ViewModel de Red
+    val viewModel: ProductoViewModel = viewModel(
+        key = "search_vm", // Usamos una key para tener una instancia separada de la de HomeScreen
+        factory = ProductoViewModelFactory(ProductoRepository(RetrofitClient.productoApiService))
     )
 
-        // --- Lista de Resultados ---
-        LazyColumn(
-            modifier = Modifier.padding(top = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+    val context = LocalContext.current
+    var searchQuery by remember { mutableStateOf("") }
 
-            if (searchQuery.isNotBlank() && searchResults.isEmpty()) {
-                item {
-                    Text(
-                        text = "No se encontraron productos para \"$searchQuery\"",
-                        modifier = Modifier.padding(vertical = 24.dp),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+    val productos by viewModel.productos.observeAsState(emptyList())
+    val isLoading by viewModel.isLoading.observeAsState(false)
+    val isLoadingMore by viewModel.isLoadingMore.observeAsState(false)
+    val error by viewModel.error.observeAsState()
+
+    LaunchedEffect(error) {
+        error?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.clearError()
+        }
+    }
+
+    // 2. Lógica de Búsqueda con "debounce"
+    LaunchedEffect(searchQuery) {
+        // Espera 500ms después de la última pulsación antes de buscar
+        delay(500)
+        if (searchQuery.isNotBlank()) {
+            viewModel.search(searchQuery)
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        TopAppBar(
+            title = {
+                TextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Buscar productos...") },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Default.Search, contentDescription = "Icono de búsqueda")
+                    },
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                        unfocusedIndicatorColor = MaterialTheme.colorScheme.surface
                     )
-                }
+                )
+            }
+        )
+
+        // 3. Mostrar Resultados Paginados
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else if (productos.isEmpty() && searchQuery.isNotBlank()) {
+                Text("No se encontraron resultados", modifier = Modifier.align(Alignment.Center))
             } else {
-                items(searchResults) { product ->
-                    ProductCard(
-                        product = product,
-                        onClick = {
-
-                            navController.navigate(
-                                AppScreens.ProductDetailScreen.createRoute(
-                                    product.id
-                                )
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    contentPadding = PaddingValues(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    itemsIndexed(productos) { index, producto ->
+                        if (index == productos.size - 1 && !isLoadingMore) {
+                            LaunchedEffect(Unit) { viewModel.loadNextPage() }
+                        }
+                        ProductCard(product = producto, onClick = {
+                            navController.navigate(AppScreens.ProductDetailScreen.createRoute(producto.id.toString()))
+                        })
+                    }
+                    if (isLoadingMore) {
+                        item {
+                            Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                    }
                 }
             }
         }

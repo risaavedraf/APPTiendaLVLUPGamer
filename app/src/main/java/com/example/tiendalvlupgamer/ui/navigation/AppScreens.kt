@@ -1,6 +1,5 @@
 package com.example.tiendalvlupgamer.ui.navigation
 
-// ui/navigation/AppScreens.kt
 sealed class AppScreens(val route: String) {
     object LoginScreen : AppScreens("login_screen")
     object RegisterScreen : AppScreens("register_screen")
@@ -19,6 +18,8 @@ sealed class AppScreens(val route: String) {
     object EditProfileScreen : AppScreens("edit_profile_screen")
     object MenuScreen : AppScreens("menu_screen")
     object EventsScreen : AppScreens("events_screen")
-
-
+    object DireccionesScreen : AppScreens("direcciones_screen")
+    object DireccionFormScreen : AppScreens("direccion_form_screen/{direccionId}") {
+        fun createRoute(direccionId: Long) = "direccion_form_screen/$direccionId"
+    }
 }
