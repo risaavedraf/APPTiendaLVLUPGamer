@@ -49,4 +49,16 @@ object RetrofitClient {
     val productoApiService: ProductoApiService by lazy {
         retrofit.create(ProductoApiService::class.java)
     }
+
+    val reviewApiService: ReviewApiService by lazy {
+        retrofit.create(ReviewApiService::class.java)
+    }
+
+    val pedidoApiService: PedidoApiService by lazy {
+        retrofit.create(PedidoApiService::class.java)
+    }
+    
+    val carritoApiService: CarritoApiService by lazy {
+        retrofit.create(CarritoApiService::class.java)
+    }
 }

@@ -18,8 +18,11 @@ sealed class AppScreens(val route: String) {
     object EditProfileScreen : AppScreens("edit_profile_screen")
     object MenuScreen : AppScreens("menu_screen")
     object EventsScreen : AppScreens("events_screen")
-    object DireccionesScreen : AppScreens("direcciones_screen")
     object DireccionFormScreen : AppScreens("direccion_form_screen/{direccionId}") {
         fun createRoute(direccionId: Long) = "direccion_form_screen/$direccionId"
     }
+    object DireccionesScreen : AppScreens("direcciones_screen?selectionMode={selectionMode}") { // 1. Ruta modificada
+        fun createRoute(selectionMode: Boolean = false) = "direcciones_screen?selectionMode=$selectionMode"
+    }
+    object PedidosScreen : AppScreens("pedidos_screen") // 2. Nueva ruta
 }

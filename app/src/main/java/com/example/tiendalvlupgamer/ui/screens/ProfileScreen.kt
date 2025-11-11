@@ -54,7 +54,6 @@ fun ProfileScreen(
     val user by SessionManager.currentUser.collectAsState()
     val fullProfile by profileViewModel.profile.observeAsState()
 
-    // Recargar el perfil cuando se vuelve a esta pantalla
     LaunchedEffect(navController.currentBackStackEntry) {
         if (user != null) {
             profileViewModel.getMyProfile()
@@ -81,9 +80,7 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                     Divider()
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         InfoRow(label = "Correo Electrónico", value = profile.email)
@@ -91,7 +88,12 @@ fun ProfileScreen(
                             label = "Fecha de Nacimiento",
                             value = profile.birthDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: "No especificada"
                         )
+                        // Botón para navegar a Mis Pedidos
+                        TextButton(onClick = { navController.navigate(AppScreens.PedidosScreen.route) }) {
+                            Text("Mis Pedidos")
+                        }
                     }
+                    Divider()
                 }
                 
                 item {
@@ -101,7 +103,7 @@ fun ProfileScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("Mis Direcciones", style = MaterialTheme.typography.titleMedium)
-                        TextButton(onClick = { navController.navigate(AppScreens.DireccionesScreen.route) }) {
+                        TextButton(onClick = { navController.navigate(AppScreens.DireccionesScreen.createRoute()) }) {
                             Text("Gestionar")
                         }
                     }
@@ -113,10 +115,7 @@ fun ProfileScreen(
                     }
                 } else {
                     item {
-                        Text(
-                            text = "No tienes direcciones guardadas.", 
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
+                        Text("No tienes direcciones guardadas.", modifier = Modifier.padding(vertical = 8.dp))
                     }
                 }
 
@@ -142,9 +141,7 @@ fun ProfileScreen(
                                 }
                             }
                         },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                     ) {
                         Text("Cerrar Sesión")
@@ -174,21 +171,14 @@ private fun ProfileHeader(profile: FullProfileResponse, onEditProfile: () -> Uni
                 Image(
                     bitmap = bitmap.asImageBitmap(),
                     contentDescription = "Foto de perfil",
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
-                        .border(2.dp, yellow, CircleShape),
+                    modifier = Modifier.size(120.dp).clip(CircleShape).border(2.dp, yellow, CircleShape),
                     contentScale = ContentScale.Crop
                 )
             } else {
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = "Foto de perfil por defecto",
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
-                        .border(2.dp, yellow, CircleShape)
-                        .padding(8.dp),
+                    modifier = Modifier.size(120.dp).clip(CircleShape).border(2.dp, yellow, CircleShape).padding(8.dp),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -198,17 +188,9 @@ private fun ProfileHeader(profile: FullProfileResponse, onEditProfile: () -> Uni
         }
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = "${profile.name} ${profile.lastName}",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
+        Text(text = "${profile.name} ${profile.lastName}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "@${profile.username}",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Text(text = "@${profile.username}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -219,39 +201,19 @@ private fun GuestProfileView() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = Icons.Default.Person,
-            contentDescription = "Perfil de invitado",
-            modifier = Modifier.size(120.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
+        Icon(imageVector = Icons.Default.Person, contentDescription = "Perfil de invitado", modifier = Modifier.size(120.dp), tint = MaterialTheme.colorScheme.primary)
         Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Usuario Invitado",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Text(text = "Usuario Invitado", fontSize = 24.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Inicia sesión para ver tu perfil y más.",
-            style = MaterialTheme.typography.bodyLarge
-        )
+        Text("Inicia sesión para ver tu perfil y más.", style = MaterialTheme.typography.bodyLarge)
     }
 }
 
 @Composable
 private fun InfoRow(label: String, value: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.SemiBold
-        )
+        Text(text = label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
     }
 }
 

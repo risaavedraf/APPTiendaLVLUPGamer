@@ -47,7 +47,6 @@ fun AppNavigation() {
             startDestination = AppScreens.WelcomeScreen.route,
             modifier = Modifier.padding(paddingValues)
         ) {
-            // --- FLUJO DE AUTENTICACIÓN ---
             composable(AppScreens.WelcomeScreen.route) {
                 WelcomeScreen(
                     onNavigateRegister = { navController.navigate(AppScreens.RegisterScreen.route) },
@@ -70,11 +69,8 @@ fun AppNavigation() {
                     }
                 )
             }
-            composable(AppScreens.RegisterScreen.route) {
-                RegisterScreen(navController = navController)
-            }
+            composable(AppScreens.RegisterScreen.route) { RegisterScreen(navController = navController) }
 
-            // --- FLUJO PRINCIPAL DE LA APP ---
             composable(AppScreens.HomeScreen.route) { HomeScreen(navController) }
             composable(AppScreens.SearchScreen.route) { SearchScreen(navController) }
             composable(AppScreens.CartScreen.route) { CartScreen(navController) }
@@ -82,7 +78,18 @@ fun AppNavigation() {
             composable(AppScreens.EditProfileScreen.route) { EditProfileScreen(navController) }
             composable(AppScreens.MenuScreen.route) { MenuScreen(navController) }
             composable(AppScreens.EventsScreen.route) { EventsScreen(navController) }
-            composable(AppScreens.DireccionesScreen.route) { DireccionesScreen(navController) }
+            composable(AppScreens.PedidosScreen.route) { PedidosScreen(navController) } // Nueva pantalla
+
+            composable(
+                route = AppScreens.DireccionesScreen.route,
+                arguments = listOf(navArgument("selectionMode") { 
+                    type = NavType.BoolType
+                    defaultValue = false
+                })
+            ) { backStackEntry ->
+                val selectionMode = backStackEntry.arguments?.getBoolean("selectionMode") ?: false
+                DireccionesScreen(navController = navController, selectionMode = selectionMode)
+            }
 
             composable(
                 route = AppScreens.ProductDetailScreen.route,

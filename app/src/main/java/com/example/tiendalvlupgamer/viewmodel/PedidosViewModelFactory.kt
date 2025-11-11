@@ -2,17 +2,13 @@ package com.example.tiendalvlupgamer.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.tiendalvlupgamer.data.repository.CarritoRepository
 import com.example.tiendalvlupgamer.data.repository.PedidoRepository
 
-class CartViewModelFactory(
-    private val carritoRepository: CarritoRepository,
-    private val pedidoRepository: PedidoRepository
-) : ViewModelProvider.Factory {
+class PedidosViewModelFactory(private val repository: PedidoRepository) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(CartViewModel::class.java)) {
+        if (modelClass.isAssignableFrom(PedidosViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return CartViewModel(carritoRepository, pedidoRepository) as T
+            return PedidosViewModel(repository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

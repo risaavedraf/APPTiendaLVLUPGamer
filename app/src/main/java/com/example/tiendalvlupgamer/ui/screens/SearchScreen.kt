@@ -18,6 +18,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.tiendalvlupgamer.data.network.RetrofitClient
 import com.example.tiendalvlupgamer.data.repository.ProductoRepository
+import com.example.tiendalvlupgamer.data.repository.ReviewRepository
 import com.example.tiendalvlupgamer.ui.components.ProductCard
 import com.example.tiendalvlupgamer.ui.navigation.AppScreens
 import com.example.tiendalvlupgamer.viewmodel.ProductoViewModel
@@ -27,10 +28,12 @@ import kotlinx.coroutines.delay
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(navController: NavController) {
-    // 1. Conectar el ViewModel de Red
     val viewModel: ProductoViewModel = viewModel(
-        key = "search_vm", // Usamos una key para tener una instancia separada de la de HomeScreen
-        factory = ProductoViewModelFactory(ProductoRepository(RetrofitClient.productoApiService))
+        key = "search_vm", 
+        factory = ProductoViewModelFactory(
+            productoRepository = ProductoRepository(RetrofitClient.productoApiService),
+            reviewRepository = ReviewRepository(RetrofitClient.reviewApiService) 
+        )
     )
 
     val context = LocalContext.current
@@ -48,9 +51,7 @@ fun SearchScreen(navController: NavController) {
         }
     }
 
-    // 2. Lógica de Búsqueda con "debounce"
     LaunchedEffect(searchQuery) {
-        // Espera 500ms después de la última pulsación antes de buscar
         delay(500)
         if (searchQuery.isNotBlank()) {
             viewModel.search(searchQuery)
@@ -77,7 +78,6 @@ fun SearchScreen(navController: NavController) {
             }
         )
 
-        // 3. Mostrar Resultados Paginados
         Box(modifier = Modifier.fillMaxSize()) {
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
