@@ -9,7 +9,7 @@ import com.example.tiendalvlupgamer.data.repository.AuthRepository
 class RegisterViewModelFactory(private val userDao: UserDao) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(RegisterViewModel::class.java)) {
-            val authRepository = AuthRepository(RetrofitClient.instance)
+            val authRepository = AuthRepository(RetrofitClient.authApiService)
             @Suppress("UNCHECKED_CAST")
             return RegisterViewModel(userDao, authRepository) as T
         }

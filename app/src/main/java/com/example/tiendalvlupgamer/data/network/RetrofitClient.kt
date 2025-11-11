@@ -11,7 +11,6 @@ import java.time.LocalDateTime
 object RetrofitClient {
     private const val BASE_URL = "http://10.0.2.2:8080/"
 
-    // 1. Crear una instancia de Gson con ambos adaptadores registrados
     private val gson = GsonBuilder()
         .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter())
         .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeAdapter())
@@ -29,13 +28,17 @@ object RetrofitClient {
         }
         .build()
 
-    val instance: AuthApiService by lazy {
-        val retrofit = Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(okHttpClient)
-            // 2. Usar la instancia de Gson personalizada
-            .addConverterFactory(GsonConverterFactory.create(gson))
-            .build()
+    private val retrofit = Retrofit.Builder()
+        .baseUrl(BASE_URL)
+        .client(okHttpClient)
+        .addConverterFactory(GsonConverterFactory.create(gson))
+        .build()
+
+    val authApiService: AuthApiService by lazy {
         retrofit.create(AuthApiService::class.java)
+    }
+
+    val profileApiService: ProfileApiService by lazy {
+        retrofit.create(ProfileApiService::class.java)
     }
 }

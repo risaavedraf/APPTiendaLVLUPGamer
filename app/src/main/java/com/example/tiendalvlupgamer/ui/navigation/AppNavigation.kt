@@ -80,6 +80,7 @@ fun AppNavigation() {
             composable(AppScreens.SearchScreen.route) { SearchScreen(navController) }
             composable(AppScreens.CartScreen.route) { CartScreen(navController) }
             composable(AppScreens.ProfileScreen.route) { ProfileScreen(navController) }
+            composable(AppScreens.EditProfileScreen.route) { EditProfileScreen(navController) }
             composable(AppScreens.MenuScreen.route) { MenuScreen(navController) }
             composable(AppScreens.EventsScreen.route) { EventsScreen(navController) }
 
