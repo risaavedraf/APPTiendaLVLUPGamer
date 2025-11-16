@@ -14,29 +14,22 @@ interface ProductoApiService {
 
     @GET("productos")
     suspend fun getProductos(
+        @Query("query") query: String? = null,
         @Query("page") page: Int,
         @Query("size") size: Int,
-        @Query("categoriaId") categoriaId: Long? = null, // 1. Añadido el filtro opcional
+        @Query("categoriaId") categoriaId: Long? = null,
         @Query("sort") sort: String = "nombre,asc"
     ): Response<PageResponse<ProductoResponse>>
 
     @GET("productos/{id}")
     suspend fun getProductoById(@Path("id") id: Long): Response<ProductoResponse>
 
-    @GET("productos/search")
-    suspend fun searchProductos(
-        @Query("query") query: String,
-        @Query("page") page: Int,
-        @Query("size") size: Int
-    ): Response<PageResponse<ProductoResponse>>
-
     @GET
     suspend fun getImageData(@Url imageUrl: String): Response<ImageResponse>
 
-    // 2. Añadido el nuevo endpoint para obtener categorías
     @GET("categorias")
     suspend fun getCategorias(
         @Query("page") page: Int = 0,
-        @Query("size") size: Int = 20 // Obtenemos hasta 20 categorías, debería ser suficiente
+        @Query("size") size: Int = 20
     ): Response<PageResponse<CategoriaResponse>>
 }

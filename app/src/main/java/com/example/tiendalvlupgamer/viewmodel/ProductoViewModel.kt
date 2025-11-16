@@ -54,11 +54,7 @@ class ProductoViewModel(
             }
 
             try {
-                val response = if (currentQuery.isNullOrEmpty()) {
-                    productoRepository.getProductos(page = currentPage, size = 10)
-                } else {
-                    productoRepository.searchProductos(query = currentQuery!!, page = currentPage, size = 10)
-                }
+                val response = productoRepository.getProductos(query = currentQuery, page = currentPage, size = 10)
 
                 if (response.isSuccessful) {
                     val newPage = response.body()
