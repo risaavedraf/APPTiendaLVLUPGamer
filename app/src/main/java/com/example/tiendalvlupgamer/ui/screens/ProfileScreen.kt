@@ -32,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.tiendalvlupgamer.data.network.RetrofitClient
+import com.example.tiendalvlupgamer.data.repository.ImagenRepository
 import com.example.tiendalvlupgamer.data.repository.ProfileRepository
 import com.example.tiendalvlupgamer.model.DireccionResponse
 import com.example.tiendalvlupgamer.model.FullProfileResponse
@@ -47,7 +48,8 @@ fun ProfileScreen(
     navController: NavController,
     profileViewModel: ProfileViewModel = viewModel(
         factory = ProfileViewModelFactory(
-            ProfileRepository(RetrofitClient.profileApiService)
+            ProfileRepository(RetrofitClient.profileApiService),
+            ImagenRepository(RetrofitClient.imagenApiService) // Añadido
         )
     )
 ) {
@@ -165,8 +167,10 @@ private fun ProfileHeader(profile: FullProfileResponse, onEditProfile: () -> Uni
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(contentAlignment = Alignment.TopEnd) {
-            if (profile.profileImageBase64 != null) {
-                val imageBytes = Base64.decode(profile.profileImageBase64, Base64.DEFAULT)
+            val imageString = profile.profileImageBase64
+            if (imageString != null && imageString.contains(",")) {
+                val base64Image = imageString.substringAfter(delimiter = ',')
+                val imageBytes = Base64.decode(base64Image, Base64.DEFAULT)
                 val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                 Image(
                     bitmap = bitmap.asImageBitmap(),

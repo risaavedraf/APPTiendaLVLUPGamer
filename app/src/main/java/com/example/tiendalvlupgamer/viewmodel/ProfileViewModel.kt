@@ -4,13 +4,19 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.tiendalvlupgamer.data.repository.ImagenRepository
 import com.example.tiendalvlupgamer.data.repository.ProfileRepository
 import com.example.tiendalvlupgamer.model.FullProfileResponse
 import com.example.tiendalvlupgamer.model.UpdateProfileRequest
 import com.example.tiendalvlupgamer.model.UsuarioResponse
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import okhttp3.MultipartBody
 
-class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewModel() {
+class ProfileViewModel(
+    private val profileRepository: ProfileRepository,
+    private val imagenRepository: ImagenRepository
+    ) : ViewModel() {
 
     private val _profile = MutableLiveData<FullProfileResponse?>()
     val profile: LiveData<FullProfileResponse?> = _profile
@@ -20,6 +26,10 @@ class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewM
 
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
+
+    // Nuevo LiveData para el resultado de la subida de imagen
+    private val _imageUploadResult = MutableLiveData<String?>()
+    val imageUploadResult: LiveData<String?> = _imageUploadResult
 
     fun getMyProfile() {
         viewModelScope.launch {
@@ -44,8 +54,32 @@ class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewM
         }
     }
 
+    fun uploadProfileImage(userId: Long, imagePart: MultipartBody.Part) {
+        viewModelScope.launch {
+            try {
+                val response = imagenRepository.subirImagenUsuario(userId, imagePart)
+                if (response.isSuccessful) {
+                    _imageUploadResult.postValue("Imagen subida con éxito")
+                    // **SOLUCIÓN:** Esperar un momento para que el servidor procese la imagen
+                    delay(1000) // 1 segundo
+                    // Ahora recargamos el perfil para ver los cambios
+                    getMyProfile()
+                } else {
+                    _imageUploadResult.postValue("Error al subir la imagen: ${response.message()}")
+                }
+            } catch (e: Exception) {
+                _imageUploadResult.postValue("Excepción al subir la imagen: ${e.message()}")
+            }
+        }
+    }
+
     fun onUpdateHandled() {
         _updateResult.value = null
         _error.value = null
+    }
+
+    // Nueva función para consumir el evento de subida de imagen
+    fun onImageUploadHandled() {
+        _imageUploadResult.value = null
     }
 }
