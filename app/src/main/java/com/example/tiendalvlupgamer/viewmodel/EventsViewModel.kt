@@ -1,60 +1,68 @@
 package com.example.tiendalvlupgamer.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.example.tiendalvlupgamer.model.Event
+import androidx.lifecycle.viewModelScope
+import com.example.tiendalvlupgamer.data.repository.EventoRepository
+import com.example.tiendalvlupgamer.model.EventoResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
-class EventsViewModel : ViewModel() {
+class EventsViewModel(private val repository: EventoRepository) : ViewModel() {
 
-    private val _events = MutableStateFlow<List<Event>>(emptyList())
-    val events: StateFlow<List<Event>> = _events
+    private val _events = MutableStateFlow<List<EventoResponse>>(emptyList())
+    val events: StateFlow<List<EventoResponse>> = _events
 
-    // 1. StateFlow para el evento seleccionado
-    private val _selectedEvent = MutableStateFlow<Event?>(null)
-    val selectedEvent: StateFlow<Event?> = _selectedEvent
+    private val _selectedEvent = MutableStateFlow<EventoResponse?>(null)
+    val selectedEvent: StateFlow<EventoResponse?> = _selectedEvent
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
 
     init {
         loadEvents()
     }
 
-    // 2. Función para obtener un evento por su ID
-    fun getEventById(id: String) {
-        _selectedEvent.value = _events.value.find { it.id == id }
+    fun loadEvents() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val response = repository.getEventos()
+                if (response.isSuccessful) {
+                    _events.value = response.body()?.content ?: emptyList()
+                } else {
+                    _error.value = "Error al cargar los eventos: ${response.message()}"
+                }
+            } catch (e: Exception) {
+                _error.value = "Excepción al cargar eventos: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
     }
 
-    private fun loadEvents() {
-        _events.value = listOf(
-            Event(
-                id = "1",
-                name = "Torneo Nacional de Valorant",
-                description = "Compite contra los mejores equipos del país y demuestra tu valía en el torneo de Valorant más esperado del año. ¡Inscripciones abiertas!",
-                date = "Sábado, 15 de Noviembre - 10:00 hrs",
-                locationName = "Movistar Arena, Santiago",
-                latitude = -33.45694,
-                longitude = -70.68417,
-                imageUrl = "https://images.contentstack.io/v3/assets/bltb6530b271fddd0b1/blt_6f80a93c934988e3/65383a526435372336332152/Valorant_2023_keyart_3_1920x1080.jpg"
-            ),
-            Event(
-                id = "2",
-                name = "Lanzamiento de 'Cyberpunk 2078'",
-                description = "Sé el primero en jugar la nueva expansión. Habrá stands de prueba, cosplayers y sorteos exclusivos para los asistentes.",
-                date = "Viernes, 28 de Noviembre - 19:00 hrs",
-                locationName = "Centro Cultural Estación Mapocho, Santiago",
-                latitude = -33.4318,
-                longitude = -70.6553,
-                imageUrl = "https://static.bandainamcoent.eu/high/cyberpunk-2077/cyberpunk-2077-phantom-liberty/00-page-setup/CP2077_PL_Key-art_with-logo_2560x1440.jpg"
-            ),
-            Event(
-                id = "3",
-                name = "Feria Retro Gamer",
-                description = "Un viaje a la nostalgia. Ven a jugar, intercambiar y comprar consolas y videojuegos clásicos, desde Atari hasta PlayStation 2.",
-                date = "Domingo, 7 de Diciembre - 11:00 hrs",
-                locationName = "Club Hípico de Santiago",
-                latitude = -33.4688,
-                longitude = -70.6695,
-                imageUrl = "https://static.vecteezy.com/system/resources/thumbnails/030/171/997/original/retro-gaming-controller-with-retro-color-palette-and-headphone-in-pixel-art-style-generative-ai-png.png"
-            )
-        )
+    fun getEventById(id: Long) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val response = repository.getEventoById(id)
+                if (response.isSuccessful) {
+                    _selectedEvent.value = response.body()
+                } else {
+                    _error.value = "Error al buscar el evento: ${response.message()}"
+                }
+            } catch (e: Exception) {
+                _error.value = "Excepción al buscar evento: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 }

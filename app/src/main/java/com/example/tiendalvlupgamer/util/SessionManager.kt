@@ -1,32 +1,27 @@
 package com.example.tiendalvlupgamer.util
 
-import com.example.tiendalvlupgamer.data.entity.User
+import com.example.tiendalvlupgamer.model.UsuarioResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-/**
- * Un objeto Singleton para gestionar la sesión del usuario en toda la aplicación.
- */
 object SessionManager {
 
-    // _currentUser es privado para que solo el SessionManager pueda modificarlo.
-    private val _currentUser = MutableStateFlow<User?>(null)
+    private val _currentUser = MutableStateFlow<UsuarioResponse?>(null)
+    val currentUser: StateFlow<UsuarioResponse?> = _currentUser
 
-    // currentUser es público y de solo lectura (StateFlow) para que la UI pueda observarlo.
-    val currentUser: StateFlow<User?> = _currentUser
+    private var _token: String? = null
 
-    /**
-     * Inicia una nueva sesión con el usuario proporcionado.
-     * @param user El usuario que ha iniciado sesión.
-     */
-    fun login(user: User) {
+    fun login(user: UsuarioResponse, token: String) {
         _currentUser.value = user
+        _token = token
     }
 
-    /**
-     * Cierra la sesión actual, estableciendo el usuario a null.
-     */
     fun logout() {
         _currentUser.value = null
+        _token = null
+    }
+
+    fun getToken(): String? {
+        return _token
     }
 }

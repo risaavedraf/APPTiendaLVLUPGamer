@@ -1,33 +1,25 @@
 package com.example.tiendalvlupgamer.ui.screens
 
-import androidx.compose.foundation.Image
+import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -35,72 +27,100 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.tiendalvlupgamer.model.local.AppDatabase
-import com.example.tiendalvlupgamer.model.local.ProductEntity
-import com.example.tiendalvlupgamer.viewmodel.CartState
+import com.example.tiendalvlupgamer.data.network.RetrofitClient
+import com.example.tiendalvlupgamer.data.repository.CarritoRepository
+import com.example.tiendalvlupgamer.data.repository.PedidoRepository
+import com.example.tiendalvlupgamer.model.CarritoItemResponse
+import com.example.tiendalvlupgamer.model.CarritoResponse
+import com.example.tiendalvlupgamer.ui.components.DefaultImagePlaceholder
+import com.example.tiendalvlupgamer.ui.components.UrlBase64Image
+import com.example.tiendalvlupgamer.ui.navigation.AppScreens
 import com.example.tiendalvlupgamer.viewmodel.CartViewModel
 import com.example.tiendalvlupgamer.viewmodel.CartViewModelFactory
 import java.text.NumberFormat
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartScreen(navController: NavController) {
-    val cartDao = AppDatabase.get(LocalContext.current).cartDao()
-    val viewModel: CartViewModel = viewModel(factory = CartViewModelFactory(cartDao))
-    val state by viewModel.cartState.collectAsState(initial = CartState())
-    var couponInput by remember { mutableStateOf("") }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background) // <-- ¡AQUÍ ESTÁ LA CORRECCIÓN!
-            .padding(16.dp)
-    ) {
-        Text(
-            "Carrito de Compras",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
+    val context = LocalContext.current
+    val viewModel: CartViewModel = viewModel(
+        factory = CartViewModelFactory(
+            carritoRepository = CarritoRepository(RetrofitClient.carritoApiService),
+            pedidoRepository = PedidoRepository(RetrofitClient.pedidoApiService),
+            context = context
         )
-        Spacer(modifier = Modifier.height(16.dp))
+    )
 
-        if (state.cartItems.isEmpty()) {
-            Text("Tu carrito está vacío", style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 32.dp))
-        } else {
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(state.cartItems) { item ->
-                    CartItemRow(product = item.product, quantity = item.quantity, viewModel = viewModel)
+    val cartState by viewModel.cartState.observeAsState()
+    val error by viewModel.error.observeAsState()
+    val couponMessage by viewModel.couponMessage.observeAsState()
+
+    LaunchedEffect(error) {
+        error?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            viewModel.clearError()
+        }
+    }
+    
+    LaunchedEffect(couponMessage) {
+        couponMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            viewModel.clearCouponMessage()
+        }
+    }
+
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("Carrito de Compras") }) }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+        ) {
+            if (cartState == null || cartState?.items.isNullOrEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Tu carrito está vacío", style = MaterialTheme.typography.bodyLarge)
                 }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
+            } else {
+                val state = cartState!!
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(state.items, key = { it.productoId }) { item ->
+                        CartItemRow(item = item, viewModel = viewModel)
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
 
-            CouponSection(state, couponInput, onCouponInputChange = { couponInput = it }, viewModel)
-            
-            PriceDetailsSection(state)
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Button(
-                onClick = { viewModel.clearCart() },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-            ) {
-                Text("Vaciar Carrito")
+                CouponSection(state, viewModel)
+
+                PriceDetailsSection(state)
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = { navController.navigate(AppScreens.DireccionesScreen.createRoute(selectionMode = true)) },
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Continuar al Pago", style = MaterialTheme.typography.titleMedium)
+                }
             }
         }
     }
 }
 
 @Composable
-fun CouponSection(state: CartState, couponInput: String, onCouponInputChange: (String) -> Unit, viewModel: CartViewModel) {
+fun CouponSection(state: CarritoResponse, viewModel: CartViewModel) {
+    var couponInput by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
 
     Column {
-        if (state.appliedCoupon == null) {
+        if (state.descuento == 0.0) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = couponInput,
-                    onValueChange = onCouponInputChange,
+                    onValueChange = { couponInput = it },
                     label = { Text("Código de descuento") },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
@@ -123,32 +143,27 @@ fun CouponSection(state: CartState, couponInput: String, onCouponInputChange: (S
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Cupón aplicado: ${state.appliedCoupon}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text("Cupón aplicado", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 IconButton(onClick = { viewModel.removeCoupon() }) {
                     Icon(Icons.Default.Clear, contentDescription = "Quitar cupón")
                 }
             }
         }
-
-        state.couponMessage?.let {
-            val messageColor = if (it.contains("éxito")) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-            Text(it, color = messageColor, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
-        }
     }
 }
 
 @Composable
-fun PriceDetailsSection(state: CartState) {
+fun PriceDetailsSection(state: CarritoResponse) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Subtotal", style = MaterialTheme.typography.bodyLarge)
             Text(formatCurrency(state.subtotal), style = MaterialTheme.typography.bodyLarge)
         }
-        if (state.discountAmount > 0) {
+        if (state.descuento > 0) {
             Spacer(modifier = Modifier.height(4.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Descuento", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
-                Text("- ${formatCurrency(state.discountAmount)}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
+                Text("- ${formatCurrency(state.descuento)}", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
@@ -160,20 +175,31 @@ fun PriceDetailsSection(state: CartState) {
 }
 
 @Composable
-fun CartItemRow(product: ProductEntity, quantity: Int, viewModel: CartViewModel) {
-    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+fun CartItemRow(item: CarritoItemResponse, viewModel: CartViewModel) {
+    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Image(painter = painterResource(id = product.image), contentDescription = product.name, modifier = Modifier.size(64.dp), contentScale = ContentScale.Fit)
+            UrlBase64Image(
+                imageUrl = item.imagenUrl, // Use the provided URL from the response
+                contentDescription = item.nombreProducto,
+                modifier = Modifier.size(64.dp),
+                placeholder = { DefaultImagePlaceholder(modifier = Modifier.fillMaxSize()) }
+            )
             Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
-                Text(product.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(formatCurrency(product.price.toDouble()), style = MaterialTheme.typography.bodyMedium)
+                Text(item.nombreProducto, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Text(formatCurrency(item.precioUnitario), style = MaterialTheme.typography.bodyMedium)
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                IconButton(onClick = { viewModel.addOrUpdateProduct(product, quantity - 1) }) {
-                    Icon(Icons.Default.Remove, contentDescription = "Restar")
+                IconButton(onClick = { 
+                    if (item.cantidad > 1) {
+                        viewModel.updateQuantity(item.productoId, item.cantidad - 1) 
+                    } else {
+                        viewModel.deleteItem(item.productoId)
+                    }
+                }) {
+                    Icon(if (item.cantidad > 1) Icons.Default.Remove else Icons.Default.Delete, contentDescription = "Restar/Eliminar")
                 }
-                Text(quantity.toString(), fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                IconButton(onClick = { viewModel.addOrUpdateProduct(product, quantity + 1) }) {
+                Text(item.cantidad.toString(), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                IconButton(onClick = { viewModel.updateQuantity(item.productoId, item.cantidad + 1) }) {
                     Icon(Icons.Default.Add, contentDescription = "Añadir")
                 }
             }

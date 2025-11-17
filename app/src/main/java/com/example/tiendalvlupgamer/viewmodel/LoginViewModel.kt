@@ -6,12 +6,13 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tiendalvlupgamer.data.dao.UserDao
+import com.example.tiendalvlupgamer.data.repository.AuthRepository
 import com.example.tiendalvlupgamer.model.LoginUiState
 import com.example.tiendalvlupgamer.util.SessionManager
 import com.example.tiendalvlupgamer.util.ValidationHelper
 import kotlinx.coroutines.launch
 
-class LoginViewModel(private val userDao: UserDao) : ViewModel() {
+class LoginViewModel(private val userDao: UserDao, private val authRepository: AuthRepository) : ViewModel() {
 
     var uiState by mutableStateOf(LoginUiState())
         private set
@@ -55,24 +56,14 @@ class LoginViewModel(private val userDao: UserDao) : ViewModel() {
             }
 
             try {
-                val user = userDao.login(uiState.emailOrUsername, uiState.password)
-
-                if (user != null) {
-                    // ¡CORREGIDO! Guardamos el usuario en la sesión.
-                    SessionManager.login(user)
-
-                    uiState = uiState.copy(
-                        loading = false,
-                        loginSuccess = true,
-                        error = null
-                    )
-                    onSuccess()
-                } else {
-                    uiState = uiState.copy(
-                        loading = false,
-                        error = "Usuario o contraseña incorrectos"
-                    )
-                }
+                val response = authRepository.login(uiState.emailOrUsername, uiState.password)
+                SessionManager.login(response.usuario, response.token)
+                uiState = uiState.copy(
+                    loading = false,
+                    loginSuccess = true,
+                    error = null
+                )
+                onSuccess()
             } catch (e: Exception) {
                 uiState = uiState.copy(
                     loading = false,

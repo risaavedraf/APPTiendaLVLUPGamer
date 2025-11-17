@@ -1,119 +1,144 @@
 package com.example.tiendalvlupgamer.viewmodel
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.tiendalvlupgamer.data.repository.CarritoRepository
+import com.example.tiendalvlupgamer.data.repository.PedidoRepository
+import com.example.tiendalvlupgamer.model.*
 import com.example.tiendalvlupgamer.model.local.CartDao
-import com.example.tiendalvlupgamer.model.local.CartItemEntity
-import com.example.tiendalvlupgamer.model.local.ProductEntity
-import com.example.tiendalvlupgamer.model.local.CartItemWithProduct
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
+import com.google.gson.Gson
 import kotlinx.coroutines.launch
 
-// --- NUEVAS CLASES DE DATOS PARA UN ESTADO MÁS CLARO ---
-data class CartUiItem(val product: ProductEntity, val quantity: Int)
+class CartViewModel(
+    private val carritoRepository: CarritoRepository,
+    private val pedidoRepository: PedidoRepository,
+    cartDao: CartDao
+) : ViewModel() {
 
-data class CartState(
-    val cartItems: List<CartUiItem> = emptyList(),
-    val subtotal: Double = 0.0,
-    val discountAmount: Double = 0.0,
-    val total: Double = 0.0,
-    val appliedCoupon: String? = null,
-    val couponMessage: String? = null
-)
+    private val _cartState = MutableLiveData<CarritoResponse?>()
+    val cartState: LiveData<CarritoResponse?> = _cartState
 
-class CartViewModel(private val cartDao: CartDao) : ViewModel() {
+    private val _checkoutResult = MutableLiveData<PedidoResponse?>()
+    val checkoutResult: LiveData<PedidoResponse?> = _checkoutResult
 
-    // 1. Mapa de cupones (código -> valor de descuento)
-    private val coupons = mapOf(
-        "DESCUENTO10" to 0.10, // 10% de descuento
-        "PROMO20" to 0.20,     // 20% de descuento
-        "LVLUP5000" to 5000.0   // 5000 CLP de descuento fijo
-    )
+    private val _error = MutableLiveData<String?>()
+    val error: LiveData<String?> = _error
+    
+    private val _couponMessage = MutableLiveData<String?>()
+    val couponMessage: LiveData<String?> = _couponMessage
 
-    // 2. Estado para el código del cupón aplicado y mensajes para la UI
-    private val _appliedCouponCode = MutableStateFlow<String?>(null)
-    private val _couponMessage = MutableStateFlow<String?>(null)
-    val couponMessage: StateFlow<String?> = _couponMessage
-
-    // 3. El Flow principal que combina todo y emite un único estado del carrito
-    val cartState: Flow<CartState> = combine(
-        cartDao.getCartItems(),
-        _appliedCouponCode
-    ) { items, couponCode ->
-        val cartUiItems = items.map { CartUiItem(it.product, it.quantity) }
-        val subtotal = cartUiItems.sumOf { it.product.price.toDouble() * it.quantity }
-
-        var discountAmount = 0.0
-        if (couponCode != null) {
-            val couponValue = coupons[couponCode]
-            if (couponValue != null) {
-                discountAmount = if (couponValue <= 1.0) {
-                    subtotal * couponValue // Descuento porcentual
-                } else {
-                    couponValue // Descuento de monto fijo
-                }
-            }
-        }
-
-        // Asegurarse de que el descuento no sea mayor que el subtotal
-        if (discountAmount > subtotal) {
-            discountAmount = subtotal
-        }
-
-        val total = subtotal - discountAmount
-
-        // Emitir el nuevo estado completo
-        CartState(
-            cartItems = cartUiItems,
-            subtotal = subtotal,
-            discountAmount = discountAmount,
-            total = total,
-            appliedCoupon = couponCode,
-            couponMessage = _couponMessage.value
-        )
+    init {
+        loadCarrito()
     }
 
-    // 4. Función para aplicar un cupón desde la UI
-    fun applyCoupon(code: String) {
-        val upperCaseCode = code.uppercase()
-        if (coupons.containsKey(upperCaseCode)) {
-            _appliedCouponCode.value = upperCaseCode
-            _couponMessage.value = "¡Cupón '$upperCaseCode' aplicado con éxito!"
-        } else {
-            _couponMessage.value = "El cupón '$upperCaseCode' no es válido."
+    fun loadCarrito() {
+        viewModelScope.launch {
+            handleResponse(carritoRepository.getCarrito()) { "Error al cargar el carrito" }
+        }
+    }
+
+    fun addItem(productoId: Long, cantidad: Int) {
+        viewModelScope.launch {
+            val request = AddItemRequest(productoId, cantidad)
+            handleResponse(carritoRepository.addItem(request)) { "Error al añadir producto" }
+        }
+    }
+
+    fun updateQuantity(productoId: Long, cantidad: Int) {
+        viewModelScope.launch {
+            val request = UpdateQuantityRequest(cantidad)
+            handleResponse(carritoRepository.updateItemQuantity(productoId, request)) { "Error al actualizar cantidad" }
+        }
+    }
+
+    fun deleteItem(productoId: Long) {
+        viewModelScope.launch {
+            handleResponse(carritoRepository.deleteItem(productoId)) { "Error al eliminar producto" }
+        }
+    }
+
+    fun applyCoupon(codigo: String) {
+        viewModelScope.launch {
+            val request = CuponRequest(codigo)
+            handleResponse(carritoRepository.aplicarCupon(request),
+                successMessage = "¡Cupón aplicado con éxito!",
+                errorMessage = { "Error al aplicar el cupón" }
+            )
+        }
+    }
+
+    fun removeCoupon() {
+        viewModelScope.launch {
+            handleResponse(carritoRepository.quitarCupon()) { "Error al quitar el cupón" }
+        }
+    }
+
+    fun realizarCheckout(direccionId: Long) {
+        val items = _cartState.value?.items?.map {
+            CheckoutItemRequest(productId = it.productoId, quantity = it.cantidad)
+        }
+
+        if (items.isNullOrEmpty()) {
+            _error.postValue("El carrito está vacío.")
+            return
+        }
+
+        val request = CheckoutRequest(direccionId = direccionId, items = items)
+
+        viewModelScope.launch {
+            try {
+                val response = pedidoRepository.realizarCheckout(request)
+                if (response.isSuccessful) {
+                    _checkoutResult.postValue(response.body())
+                    _cartState.postValue(null) // Limpiar el estado del carrito
+                } else {
+                    handleErrorResponse(response.errorBody()?.string(), response.message())
+                }
+            } catch (e: Exception) {
+                _error.postValue("Excepción durante el checkout: ${e.message}")
+            }
         }
     }
     
-    fun removeCoupon() {
-        _appliedCouponCode.value = null
+    // --- Métodos de Ayuda ---
+
+    private suspend fun handleResponse(
+        response: retrofit2.Response<CarritoResponse>,
+        successMessage: String? = null,
+        errorMessage: () -> String
+    ) {
+        try {
+            if (response.isSuccessful) {
+                _cartState.postValue(response.body())
+                successMessage?.let { _couponMessage.postValue(it) }
+            } else {
+                handleErrorResponse(response.errorBody()?.string(), response.message())
+            }
+        } catch (e: Exception) {
+            _error.postValue("Excepción: ${e.message}")
+        }
+    }
+
+    private fun handleErrorResponse(errorBody: String?, genericMessage: String) {
+        val specificMessage = if (errorBody != null) {
+            try {
+                Gson().fromJson(errorBody, ApiErrorResponse::class.java).message
+            } catch (e: Exception) { genericMessage }
+        } else { genericMessage }
+        _error.postValue(specificMessage)
+    }
+
+    fun clearError() {
+        _error.value = null
+    }
+    
+    fun clearCouponMessage() {
         _couponMessage.value = null
     }
 
-    // --- Las funciones existentes se mantienen, pero con pequeños ajustes ---
-    fun addOrUpdateProduct(product: ProductEntity, quantity: Int) {
-        viewModelScope.launch {
-            if (quantity > 0) {
-                val cartItem = CartItemEntity(productId = product.id, quantity = quantity)
-                cartDao.insert(cartItem)
-            } else {
-                removeProduct(product)
-            }
-        }
-    }
-
-    fun removeProduct(product: ProductEntity) {
-        viewModelScope.launch {
-            cartDao.deleteByProductId(product.id)
-        }
-    }
-
-    fun clearCart() {
-        viewModelScope.launch {
-            cartDao.clearCart()
-            removeCoupon() // También limpiar el cupón al vaciar el carrito
-        }
+    fun onCheckoutConsumed(){
+        _checkoutResult.value = null
     }
 }

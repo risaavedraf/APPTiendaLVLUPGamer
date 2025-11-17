@@ -1,6 +1,5 @@
-package com.example.levelupgamer.ui.navigation
+package com.example.tiendalvlupgamer.ui.navigation
 
-// ui/navigation/AppScreens.kt
 sealed class AppScreens(val route: String) {
     object LoginScreen : AppScreens("login_screen")
     object RegisterScreen : AppScreens("register_screen")
@@ -8,16 +7,22 @@ sealed class AppScreens(val route: String) {
     object HomeScreen : AppScreens("home_screen")
     object SearchScreen : AppScreens("search")
     object ProductDetailScreen : AppScreens("product_detail_screen/{productId}") {
-        fun createRoute(productId: String) = "product_detail_screen/$productId"
+        fun createRoute(productId: Long) = "product_detail_screen/$productId"
     }
     object EventDetailScreen : AppScreens("event_detail_screen/{eventId}") {
-        fun createRoute(eventId: String) = "event_detail_screen/$eventId"
+        fun createRoute(eventId: Long) = "event_detail_screen/$eventId"
     }
     object CatalogScreen : AppScreens("catalog_screen")
     object CartScreen : AppScreens("cart")
     object ProfileScreen : AppScreens("profile_screen")
+    object EditProfileScreen : AppScreens("edit_profile_screen")
     object MenuScreen : AppScreens("menu_screen")
     object EventsScreen : AppScreens("events_screen")
-
-
+    object DireccionFormScreen : AppScreens("direccion_form_screen/{direccionId}") {
+        fun createRoute(direccionId: Long) = "direccion_form_screen/$direccionId"
+    }
+    object DireccionesScreen : AppScreens("direcciones_screen?selectionMode={selectionMode}") {
+        fun createRoute(selectionMode: Boolean = false) = "direcciones_screen?selectionMode=$selectionMode"
+    }
+    object PedidosScreen : AppScreens("pedidos_screen")
 }

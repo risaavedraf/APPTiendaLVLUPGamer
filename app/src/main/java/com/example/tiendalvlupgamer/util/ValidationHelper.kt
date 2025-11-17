@@ -1,48 +1,41 @@
 package com.example.tiendalvlupgamer.util
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 object ValidationHelper {
 
+    fun validateRequired(value: String, fieldName: String): String? {
+        return if (value.isEmpty()) "El campo $fieldName es requerido" else null
+    }
+
     fun validateEmail(email: String): String? {
-        if (email.isBlank()) return "El correo es obligatorio"
-        val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$".toRegex()
-        if (!emailRegex.matches(email)) {
-            return "Formato de correo inválido (ej: correo@dominio.cl)"
-        }
+        if (email.isEmpty()) return "El correo es requerido"
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) return "Formato de correo inválido"
         return null
     }
 
     fun validatePassword(password: String): String? {
-        if (password.isBlank()) return "La contraseña es obligatoria"
-        if (password.length < 8) return "La contraseña debe tener al menos 8 caracteres"
-        if (!password.any { it.isUpperCase() }) return "Debe contener al menos 1 mayúscula"
-        if (!password.any { it.isLowerCase() }) return "Debe contener al menos 1 minúscula"
-        if (!password.any { it.isDigit() }) return "Debe contener al menos 1 número"
-        if (!password.any { !it.isLetterOrDigit() }) return "Debe contener al menos 1 símbolo"
+        if (password.isEmpty()) return "La contraseña es requerida"
+        if (password.length < 6) return "La contraseña debe tener al menos 6 caracteres"
         return null
     }
 
     fun validateUsername(username: String): String? {
-        if (username.isBlank()) return "El nombre de usuario es obligatorio"
-        if (username.length < 3) return "Debe tener al menos 3 caracteres"
-        if (!username.matches("^[a-zA-Z0-9_]+$".toRegex())) {
-            return "Solo puede contener letras, números y guión bajo"
-        }
+        if (username.isEmpty()) return "El username es requerido"
+        if (username.length < 4) return "El username debe tener al menos 4 caracteres"
         return null
     }
 
-    fun validateRequired(value: String, fieldName: String): String? {
-        return if (value.isBlank()) "$fieldName es obligatorio" else null
+    fun validateDate(date: String, format: String): String? {
+        if (date.isEmpty()) return "La fecha de nacimiento es requerida"
+        return try {
+            val sdf = SimpleDateFormat(format, Locale.getDefault())
+            sdf.isLenient = false
+            sdf.parse(date)
+            null
+        } catch (e: Exception) {
+            "Formato de fecha inválido. Use $format"
+        }
     }
-
-
 }

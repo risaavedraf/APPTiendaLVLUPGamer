@@ -13,8 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.levelupgamer.ui.components.AppBottomBar
-import com.example.levelupgamer.ui.navigation.AppScreens
+import com.example.tiendalvlupgamer.ui.components.AppBottomBar
 import com.example.tiendalvlupgamer.util.SessionManager
 import com.example.tiendalvlupgamer.view.LoginScreen
 import com.example.tiendalvlupgamer.view.RegisterScreen
@@ -48,7 +47,6 @@ fun AppNavigation() {
             startDestination = AppScreens.WelcomeScreen.route,
             modifier = Modifier.padding(paddingValues)
         ) {
-            // --- FLUJO DE AUTENTICACIÓN ---
             composable(AppScreens.WelcomeScreen.route) {
                 WelcomeScreen(
                     onNavigateRegister = { navController.navigate(AppScreens.RegisterScreen.route) },
@@ -71,34 +69,53 @@ fun AppNavigation() {
                     }
                 )
             }
-            composable(AppScreens.RegisterScreen.route) {
-                RegisterScreen(navController = navController)
-            }
+            composable(AppScreens.RegisterScreen.route) { RegisterScreen(navController = navController) }
 
-            // --- FLUJO PRINCIPAL DE LA APP ---
             composable(AppScreens.HomeScreen.route) { HomeScreen(navController) }
             composable(AppScreens.SearchScreen.route) { SearchScreen(navController) }
             composable(AppScreens.CartScreen.route) { CartScreen(navController) }
             composable(AppScreens.ProfileScreen.route) { ProfileScreen(navController) }
+            composable(AppScreens.EditProfileScreen.route) { EditProfileScreen(navController) }
             composable(AppScreens.MenuScreen.route) { MenuScreen(navController) }
             composable(AppScreens.EventsScreen.route) { EventsScreen(navController) }
+            composable(AppScreens.PedidosScreen.route) { PedidosScreen(navController) }
+
+            composable(
+                route = AppScreens.DireccionesScreen.route,
+                arguments = listOf(navArgument("selectionMode") { 
+                    type = NavType.BoolType
+                    defaultValue = false
+                })
+            ) { backStackEntry ->
+                val selectionMode = backStackEntry.arguments?.getBoolean("selectionMode") ?: false
+                DireccionesScreen(navController = navController, selectionMode = selectionMode)
+            }
 
             composable(
                 route = AppScreens.ProductDetailScreen.route,
-                arguments = listOf(navArgument("productId") { type = NavType.StringType })
+                arguments = listOf(navArgument("productId") { type = NavType.LongType })
             ) { backStackEntry ->
-                val productId = backStackEntry.arguments?.getString("productId")
+                val productId = backStackEntry.arguments?.getLong("productId")
                 requireNotNull(productId)
                 ProductDetailScreen(navController = navController, productId = productId)
             }
 
             composable(
                 route = AppScreens.EventDetailScreen.route,
-                arguments = listOf(navArgument("eventId") { type = NavType.StringType })
+                arguments = listOf(navArgument("eventId") { type = NavType.LongType })
             ) { backStackEntry ->
-                val eventId = backStackEntry.arguments?.getString("eventId")
+                val eventId = backStackEntry.arguments?.getLong("eventId")
                 requireNotNull(eventId)
                 EventDetailScreen(navController = navController, eventId = eventId)
+            }
+
+            composable(
+                route = AppScreens.DireccionFormScreen.route,
+                arguments = listOf(navArgument("direccionId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val direccionId = backStackEntry.arguments?.getLong("direccionId")
+                requireNotNull(direccionId)
+                DireccionFormScreen(navController = navController, direccionId = direccionId)
             }
         }
     }

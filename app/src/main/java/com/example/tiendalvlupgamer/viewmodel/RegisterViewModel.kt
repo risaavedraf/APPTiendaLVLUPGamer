@@ -7,12 +7,15 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tiendalvlupgamer.data.dao.UserDao
-import com.example.tiendalvlupgamer.data.entity.User
+import com.example.tiendalvlupgamer.data.repository.AuthRepository
+import com.example.tiendalvlupgamer.model.RegistroRequest
 import com.example.tiendalvlupgamer.util.ValidationHelper
 import com.example.tiendalvlupgamer.model.RegisterUiState
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
 
-class RegisterViewModel(private val userDao: UserDao) : ViewModel() {
+class RegisterViewModel(private val userDao: UserDao, private val authRepository: AuthRepository) : ViewModel() {
 
     var uiState by mutableStateOf(RegisterUiState())
         private set
@@ -69,28 +72,24 @@ class RegisterViewModel(private val userDao: UserDao) : ViewModel() {
         uiState = uiState.copy(loading = loading)
     }
 
-    private suspend fun validate(): String? {
+    private fun validate(): String? {
         val nameErr = ValidationHelper.validateRequired(uiState.name, "Nombre")
         val lastNameErr = ValidationHelper.validateRequired(uiState.lastName, "Apellido")
         val usernameErr = ValidationHelper.validateUsername(uiState.username)
         val emailErr = ValidationHelper.validateEmail(uiState.email)
         val passwordErr = ValidationHelper.validatePassword(uiState.password)
-
-        val existingEmail = userDao.getUserByEmail(uiState.email)
-        val emailExistsErr = if (existingEmail != null) "Este correo ya está registrado" else null
-
-        val existingUsername = userDao.getUserByUsername(uiState.username)
-        val usernameExistsErr = if (existingUsername != null) "Este username ya está en uso" else null
+        val birthDateErr = ValidationHelper.validateDate(uiState.birthDate, "dd/MM/yyyy")
 
         uiState = uiState.copy(
             nameError = nameErr,
             lastNameError = lastNameErr,
-            usernameError = usernameErr ?: usernameExistsErr,
-            emailError = emailErr ?: emailExistsErr,
-            passwordError = passwordErr
+            usernameError = usernameErr,
+            emailError = emailErr,
+            passwordError = passwordErr,
+            birthDateError = birthDateErr
         )
 
-        return nameErr ?: lastNameErr ?: usernameErr ?: usernameExistsErr ?: emailErr ?: emailExistsErr ?: passwordErr
+        return nameErr ?: lastNameErr ?: usernameErr ?: emailErr ?: passwordErr ?: birthDateErr
     }
 
     fun tryRegister(onSuccess: () -> Unit) {
@@ -104,16 +103,29 @@ class RegisterViewModel(private val userDao: UserDao) : ViewModel() {
             }
 
             try {
-                val user = User(
+                val formattedBirthDate = try {
+                    val inputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                    val outputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    val date = inputFormat.parse(uiState.birthDate)
+                    outputFormat.format(date!!)
+                } catch (e: Exception) {
+                    uiState = uiState.copy(
+                        loading = false,
+                        error = "Formato de fecha inválido. Use dd/MM/yyyy"
+                    )
+                    return@launch
+                }
+
+                val request = RegistroRequest(
                     name = uiState.name,
                     lastName = uiState.lastName,
                     username = uiState.username,
-                    birthDate = uiState.birthDate,
+                    birthDate = formattedBirthDate,
                     email = uiState.email,
                     password = uiState.password
                 )
 
-                userDao.insertUser(user)
+                authRepository.register(request)
 
                 uiState = uiState.copy(
                     loading = false,
