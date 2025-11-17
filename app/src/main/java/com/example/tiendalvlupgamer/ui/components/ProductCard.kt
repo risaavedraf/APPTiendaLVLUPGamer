@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.tiendalvlupgamer.model.ProductoResponse
+import com.example.tiendalvlupgamer.ui.components.DefaultImagePlaceholder
 import java.text.NumberFormat
 import java.util.Locale
 
