@@ -5,6 +5,8 @@ import okhttp3.MultipartBody
 
 class ImagenRepository(private val imagenApiService: ImagenApiService) {
 
+    suspend fun descargarImagen(url: String) = imagenApiService.descargarImagen(url)
+
     suspend fun getUsuarioImagenBase64(usuarioId: Long, imageId: Long) = 
         imagenApiService.getUsuarioImagenBase64(usuarioId, imageId)
 

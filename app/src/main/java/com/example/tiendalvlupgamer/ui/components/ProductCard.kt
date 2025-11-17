@@ -42,9 +42,7 @@ fun ProductCard(
                     .fillMaxWidth()
                     .aspectRatio(1f),
                 placeholder = {
-                    Box(modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.LightGray))
+                    DefaultImagePlaceholder(modifier = Modifier.fillMaxSize())
                 }
             )
 

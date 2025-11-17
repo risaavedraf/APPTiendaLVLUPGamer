@@ -56,7 +56,8 @@ fun ProductDetailScreen(navController: NavController, productId: Long) {
     val cartViewModel: CartViewModel = viewModel(
         factory = CartViewModelFactory(
             carritoRepository = CarritoRepository(RetrofitClient.carritoApiService),
-            pedidoRepository = PedidoRepository(RetrofitClient.pedidoApiService)
+            pedidoRepository = PedidoRepository(RetrofitClient.pedidoApiService),
+            context = context
         )
     )
     

@@ -1,5 +1,6 @@
 package com.example.tiendalvlupgamer.ui.components
 
+import android.util.Base64
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,7 +36,9 @@ fun AsyncBase64Image(
                 val repository = ImagenRepository(com.example.tiendalvlupgamer.data.network.RetrofitClient.imagenApiService)
                 val response = repository.descargarImagen(imageUrl)
                 if (response.isSuccessful) {
-                    response.body()?.string()
+                    response.body()?.bytes()?.let { imageBytes ->
+                        Base64.encodeToString(imageBytes, Base64.DEFAULT)
+                    }
                 } else {
                     null
                 }

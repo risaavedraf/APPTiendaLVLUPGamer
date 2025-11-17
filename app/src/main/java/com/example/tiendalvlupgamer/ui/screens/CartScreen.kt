@@ -32,7 +32,8 @@ import com.example.tiendalvlupgamer.data.repository.CarritoRepository
 import com.example.tiendalvlupgamer.data.repository.PedidoRepository
 import com.example.tiendalvlupgamer.model.CarritoItemResponse
 import com.example.tiendalvlupgamer.model.CarritoResponse
-import com.example.tiendalvlupgamer.ui.components.NetworkImage
+import com.example.tiendalvlupgamer.ui.components.DefaultImagePlaceholder
+import com.example.tiendalvlupgamer.ui.components.UrlBase64Image
 import com.example.tiendalvlupgamer.ui.navigation.AppScreens
 import com.example.tiendalvlupgamer.viewmodel.CartViewModel
 import com.example.tiendalvlupgamer.viewmodel.CartViewModelFactory
@@ -46,7 +47,8 @@ fun CartScreen(navController: NavController) {
     val viewModel: CartViewModel = viewModel(
         factory = CartViewModelFactory(
             carritoRepository = CarritoRepository(RetrofitClient.carritoApiService),
-            pedidoRepository = PedidoRepository(RetrofitClient.pedidoApiService)
+            pedidoRepository = PedidoRepository(RetrofitClient.pedidoApiService),
+            context = context
         )
     )
 
@@ -176,10 +178,11 @@ fun PriceDetailsSection(state: CarritoResponse) {
 fun CartItemRow(item: CarritoItemResponse, viewModel: CartViewModel) {
     Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            NetworkImage(
-                imageUrl = item.imagenUrl, 
-                contentDescription = item.nombreProducto, 
-                modifier = Modifier.size(64.dp)
+            UrlBase64Image(
+                imageUrl = item.imagenUrl, // Use the provided URL from the response
+                contentDescription = item.nombreProducto,
+                modifier = Modifier.size(64.dp),
+                placeholder = { DefaultImagePlaceholder(modifier = Modifier.fillMaxSize()) }
             )
             Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
                 Text(item.nombreProducto, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)

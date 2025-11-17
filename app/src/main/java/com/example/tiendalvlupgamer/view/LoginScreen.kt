@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -78,7 +79,7 @@ fun LoginScreen(
                     onValueChange = viewModel::onEmailOrUsernameChange,
                     label = { Text("Correo o Username") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("emailOrUsernameInput"),
                     colors = TextFieldDefaults.colors(
                         focusedIndicatorColor = yellow,
                         unfocusedIndicatorColor = Color.Gray,
@@ -116,7 +117,7 @@ fun LoginScreen(
                         IconButton(onClick = { showPassword = !showPassword }) {
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("passwordInput"),
                     colors = TextFieldDefaults.colors(
                         focusedIndicatorColor = yellow,
                         unfocusedIndicatorColor = Color.Gray,
@@ -161,7 +162,8 @@ fun LoginScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
-                    .height(48.dp),
+                    .height(48.dp)
+                    .testTag("loginButton"),
                 enabled = !uiState.loading,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = yellow,

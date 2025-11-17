@@ -1,23 +1,27 @@
 package com.example.tiendalvlupgamer.data.network
 
+
 import com.example.tiendalvlupgamer.util.SessionManager
 import com.google.gson.GsonBuilder
+import com.yalantis.ucrop.BuildConfig
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.time.LocalDate
 import java.time.LocalDateTime
 
 object RetrofitClient {
-    private const val BASE_URL = "http://10.0.2.2:8080/api/"
+    const val API_BASE_URL = "http://13.220.165.82:8080"
+    private const val BASE_URL = "$API_BASE_URL/api/"
 
     private val gson = GsonBuilder()
         .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter())
         .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeAdapter())
         .create()
 
-    private val okHttpClient: OkHttpClient = OkHttpClient.Builder()
-        .addInterceptor { chain ->
+    private val okHttpClient: OkHttpClient = OkHttpClient.Builder().apply {
+        addInterceptor { chain ->
             val token = SessionManager.getToken()
             val request = if (token != null) {
                 chain.request().newBuilder().addHeader("Authorization", "Bearer $token").build()
@@ -26,7 +30,11 @@ object RetrofitClient {
             }
             chain.proceed(request)
         }
-        .build()
+        if (BuildConfig.DEBUG) {
+            val logging = HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
+            addInterceptor(logging)
+        }
+    }.build()
 
     private val retrofit = Retrofit.Builder()
         .baseUrl(BASE_URL)

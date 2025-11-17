@@ -8,8 +8,12 @@ import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.Url
 
 interface ImagenApiService {
+
+    @GET
+    suspend fun descargarImagen(@Url url: String): Response<ResponseBody>
 
     @GET("/api/usuarios/{id}/images/{imageId}/base64")
     suspend fun getUsuarioImagenBase64(

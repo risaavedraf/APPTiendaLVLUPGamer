@@ -26,6 +26,7 @@ import androidx.navigation.NavController
 import com.example.tiendalvlupgamer.data.network.RetrofitClient
 import com.example.tiendalvlupgamer.data.repository.EventoRepository
 import com.example.tiendalvlupgamer.model.EventoResponse
+import com.example.tiendalvlupgamer.ui.components.DefaultImagePlaceholder
 import com.example.tiendalvlupgamer.ui.components.UrlBase64Image
 import com.example.tiendalvlupgamer.ui.navigation.AppScreens
 import com.example.tiendalvlupgamer.viewmodel.EventsViewModel
@@ -104,9 +105,7 @@ fun EventCard(event: EventoResponse, onClick: () -> Unit) {
                 contentDescription = event.name,
                 modifier = Modifier.fillMaxSize(),
                 placeholder = {
-                    Box(modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.LightGray))
+                    DefaultImagePlaceholder(modifier = Modifier.fillMaxSize())
                 }
             )
             Box(

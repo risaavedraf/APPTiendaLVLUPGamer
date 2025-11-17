@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -181,11 +182,11 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Campos del formulario
-            LabeledTextField(value = uiState.name, onValueChange = viewModel::onNameChange, label = "Nombre", modifier = Modifier.fillMaxWidth(0.9f), focusColor = yellow, error = uiState.nameError)
+            LabeledTextField(value = uiState.name, onValueChange = viewModel::onNameChange, label = "Nombre", modifier = Modifier.fillMaxWidth(0.9f).testTag("nameInput"), focusColor = yellow, error = uiState.nameError)
             Spacer(modifier = Modifier.height(8.dp))
-            LabeledTextField(value = uiState.lastName, onValueChange = viewModel::onLastNameChange, label = "Apellido", modifier = Modifier.fillMaxWidth(0.9f), focusColor = yellow, error = uiState.lastNameError)
+            LabeledTextField(value = uiState.lastName, onValueChange = viewModel::onLastNameChange, label = "Apellido", modifier = Modifier.fillMaxWidth(0.9f).testTag("lastNameInput"), focusColor = yellow, error = uiState.lastNameError)
             Spacer(modifier = Modifier.height(8.dp))
-            LabeledTextField(value = uiState.username, onValueChange = viewModel::onUsernameChange, label = "Username", modifier = Modifier.fillMaxWidth(0.9f), focusColor = yellow, error = uiState.usernameError)
+            LabeledTextField(value = uiState.username, onValueChange = viewModel::onUsernameChange, label = "Username", modifier = Modifier.fillMaxWidth(0.9f).testTag("usernameInput"), focusColor = yellow, error = uiState.usernameError)
             Spacer(modifier = Modifier.height(8.dp))
 
             // Campo de fecha de nacimiento
@@ -204,7 +205,7 @@ fun RegisterScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            LabeledTextField(value = uiState.email, onValueChange = viewModel::onEmailChange, label = "Correo", modifier = Modifier.fillMaxWidth(0.9f), focusColor = yellow, error = uiState.emailError)
+            LabeledTextField(value = uiState.email, onValueChange = viewModel::onEmailChange, label = "Correo", modifier = Modifier.fillMaxWidth(0.9f).testTag("emailInput"), focusColor = yellow, error = uiState.emailError)
             Spacer(modifier = Modifier.height(8.dp))
 
             // Campo de contraseña
@@ -217,7 +218,7 @@ fun RegisterScreen(
                     visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     trailingIcon = { IconButton(onClick = { showPassword = !showPassword }) {} },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("passwordInput"),
                     colors = TextFieldDefaults.colors(focusedIndicatorColor = yellow, unfocusedIndicatorColor = Color.Gray, focusedLabelColor = yellow, unfocusedLabelColor = Color.Gray, cursorColor = yellow),
                     isError = uiState.passwordError != null
                 )
@@ -243,7 +244,7 @@ fun RegisterScreen(
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth(0.9f).height(48.dp),
+                modifier = Modifier.fillMaxWidth(0.9f).height(48.dp).testTag("registerButton"),
                 enabled = !uiState.loading,
                 colors = ButtonDefaults.buttonColors(containerColor = yellow, contentColor = Color.Black)
             ) {

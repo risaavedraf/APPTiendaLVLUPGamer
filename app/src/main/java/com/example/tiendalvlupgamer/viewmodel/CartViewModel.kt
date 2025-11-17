@@ -7,12 +7,14 @@ import androidx.lifecycle.viewModelScope
 import com.example.tiendalvlupgamer.data.repository.CarritoRepository
 import com.example.tiendalvlupgamer.data.repository.PedidoRepository
 import com.example.tiendalvlupgamer.model.*
+import com.example.tiendalvlupgamer.model.local.CartDao
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
 
 class CartViewModel(
     private val carritoRepository: CarritoRepository,
-    private val pedidoRepository: PedidoRepository 
+    private val pedidoRepository: PedidoRepository,
+    cartDao: CartDao
 ) : ViewModel() {
 
     private val _cartState = MutableLiveData<CarritoResponse?>()
