@@ -97,7 +97,7 @@ fun ProductCarousel(
                     modifier = Modifier.width(160.dp), // Damos un ancho fijo a las tarjetas
                     product = producto,
                     onClick = {
-                        navController.navigate(AppScreens.ProductDetailScreen.createRoute(producto.id.toString()))
+                        navController.navigate(AppScreens.ProductDetailScreen.createRoute(producto.id))
                     }
                 )
             }

@@ -30,7 +30,7 @@ import com.example.tiendalvlupgamer.data.repository.PedidoRepository
 import com.example.tiendalvlupgamer.data.repository.ProductoRepository
 import com.example.tiendalvlupgamer.data.repository.ReviewRepository
 import com.example.tiendalvlupgamer.model.ReviewResponse
-import com.example.tiendalvlupgamer.ui.components.NetworkImage
+import com.example.tiendalvlupgamer.ui.components.UrlBase64Image
 import com.example.tiendalvlupgamer.ui.navigation.AppScreens
 import com.example.tiendalvlupgamer.util.SessionManager
 import com.example.tiendalvlupgamer.viewmodel.CartViewModel
@@ -42,7 +42,7 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductDetailScreen(navController: NavController, productId: String) {
+fun ProductDetailScreen(navController: NavController, productId: Long) {
     val context = LocalContext.current
 
     val productoViewModel: ProductoViewModel = viewModel(
@@ -53,7 +53,6 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
         )
     )
     
-    // ViewModel del carrito para añadir productos
     val cartViewModel: CartViewModel = viewModel(
         factory = CartViewModelFactory(
             carritoRepository = CarritoRepository(RetrofitClient.carritoApiService),
@@ -64,9 +63,7 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
     val user by SessionManager.currentUser.collectAsState(null)
 
     LaunchedEffect(productId) {
-        productId.toLongOrNull()?.let {
-            productoViewModel.getProductoById(it)
-        }
+        productoViewModel.getProductoById(productId)
     }
 
     val product by productoViewModel.productoDetail.observeAsState()
@@ -125,14 +122,20 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
-                NetworkImage(
+                UrlBase64Image(
                     imageUrl = currentProduct.imagenUrl,
                     contentDescription = currentProduct.nombre,
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1f)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .clip(RoundedCornerShape(12.dp)),
+                    placeholder = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                        )
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))

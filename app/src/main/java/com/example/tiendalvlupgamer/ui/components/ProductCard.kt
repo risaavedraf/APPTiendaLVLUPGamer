@@ -1,5 +1,6 @@
 package com.example.tiendalvlupgamer.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Card
@@ -19,7 +20,7 @@ import java.util.Locale
 @Composable
 fun ProductCard(
     modifier: Modifier = Modifier,
-    product: ProductoResponse, // 1. Cambiado de ProductEntity a ProductoResponse
+    product: ProductoResponse,
     onClick: () -> Unit
 ) {
     Card(
@@ -28,32 +29,37 @@ fun ProductCard(
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
         shape = MaterialTheme.shapes.medium
     ) {
         Column {
-            // 2. Reemplazado Image con NetworkImage
-            NetworkImage(
+            // Usamos el componente que sabe obtener los datos desde una URL.
+            UrlBase64Image(
                 imageUrl = product.imagenUrl,
                 contentDescription = "Imagen de ${product.nombre}",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1f) // Proporción 1:1 para un look uniforme
+                    .aspectRatio(1f),
+                placeholder = {
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.LightGray))
+                }
             )
 
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     text = product.nombre,
                     style = MaterialTheme.typography.titleMedium,
-                    maxLines = 2, // Limita el nombre a 2 líneas
+                    maxLines = 2, 
                     overflow = TextOverflow.Ellipsis
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = product.categoria.nombre, // 3. Ajustado para usar el objeto CategoriaResponse
+                    text = product.categoria.nombre,
                     style = MaterialTheme.typography.bodyMedium
                 )
 
@@ -67,6 +73,7 @@ fun ProductCard(
                     text = formattedPrice,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }

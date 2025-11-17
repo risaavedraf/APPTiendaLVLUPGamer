@@ -1,7 +1,5 @@
 package com.example.tiendalvlupgamer.ui.screens
 
-import android.util.Base64
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -23,11 +21,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -37,6 +33,8 @@ import com.example.tiendalvlupgamer.data.repository.ProfileRepository
 import com.example.tiendalvlupgamer.model.DireccionResponse
 import com.example.tiendalvlupgamer.model.FullProfileResponse
 import com.example.tiendalvlupgamer.model.ReviewResponse
+import com.example.tiendalvlupgamer.ui.components.Base64Image
+import com.example.tiendalvlupgamer.ui.components.InfoRow
 import com.example.tiendalvlupgamer.ui.navigation.AppScreens
 import com.example.tiendalvlupgamer.util.SessionManager
 import com.example.tiendalvlupgamer.viewmodel.ProfileViewModel
@@ -49,7 +47,7 @@ fun ProfileScreen(
     profileViewModel: ProfileViewModel = viewModel(
         factory = ProfileViewModelFactory(
             ProfileRepository(RetrofitClient.profileApiService),
-            ImagenRepository(RetrofitClient.imagenApiService) // Añadido
+            ImagenRepository(RetrofitClient.imagenApiService)
         )
     )
 ) {
@@ -90,14 +88,13 @@ fun ProfileScreen(
                             label = "Fecha de Nacimiento",
                             value = profile.birthDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: "No especificada"
                         )
-                        // Botón para navegar a Mis Pedidos
                         TextButton(onClick = { navController.navigate(AppScreens.PedidosScreen.route) }) {
                             Text("Mis Pedidos")
                         }
                     }
                     Divider()
                 }
-                
+
                 item {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
@@ -167,25 +164,16 @@ private fun ProfileHeader(profile: FullProfileResponse, onEditProfile: () -> Uni
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(contentAlignment = Alignment.TopEnd) {
-            val imageString = profile.profileImageBase64
-            if (imageString != null && imageString.contains(",")) {
-                val base64Image = imageString.substringAfter(delimiter = ',')
-                val imageBytes = Base64.decode(base64Image, Base64.DEFAULT)
-                val bitmap = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                Image(
-                    bitmap = bitmap.asImageBitmap(),
-                    contentDescription = "Foto de perfil",
-                    modifier = Modifier.size(120.dp).clip(CircleShape).border(2.dp, yellow, CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Foto de perfil por defecto",
-                    modifier = Modifier.size(120.dp).clip(CircleShape).border(2.dp, yellow, CircleShape).padding(8.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
+            Base64Image(
+                base64String = profile.profileImageBase64,
+                contentDescription = "Foto de perfil",
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, yellow, CircleShape),
+                placeholder = { DefaultProfileIcon(yellow) }
+            )
+
             IconButton(onClick = onEditProfile, modifier = Modifier.offset(x = (-8).dp, y = 8.dp)) {
                 Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar perfil")
             }
@@ -199,63 +187,67 @@ private fun ProfileHeader(profile: FullProfileResponse, onEditProfile: () -> Uni
 }
 
 @Composable
-private fun GuestProfileView() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(imageVector = Icons.Default.Person, contentDescription = "Perfil de invitado", modifier = Modifier.size(120.dp), tint = MaterialTheme.colorScheme.primary)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Usuario Invitado", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text("Inicia sesión para ver tu perfil y más.", style = MaterialTheme.typography.bodyLarge)
-    }
+private fun DefaultProfileIcon(borderColor: Color) {
+    Icon(
+        imageVector = Icons.Default.Person,
+        contentDescription = "Foto de perfil por defecto",
+        modifier = Modifier.size(120.dp).clip(CircleShape).border(2.dp, borderColor, CircleShape).padding(8.dp),
+        tint = MaterialTheme.colorScheme.primary
+    )
 }
 
 @Composable
-private fun InfoRow(label: String, value: String) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+private fun GuestProfileView() {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("Inicia sesión para ver tu perfil", style = MaterialTheme.typography.headlineSmall)
+        Spacer(modifier = Modifier.height(16.dp))
+        // Consider adding a button to navigate to the login screen
     }
 }
 
 @Composable
 private fun DireccionItem(direccion: DireccionResponse) {
-    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        shape = MaterialTheme.shapes.medium
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = direccion.nombre, fontWeight = FontWeight.Bold)
-            Text(text = "${direccion.calle} ${direccion.numeroCasa}")
-            if(direccion.numeroDepartamento != null){
-                Text(text = "Depto: ${direccion.numeroDepartamento}")
-            }
-            Text(text = "${direccion.comuna}, ${direccion.ciudad}")
+            Text(text = direccion.calle, fontWeight = FontWeight.Bold)
+            Text(text = "${direccion.ciudad}, ${direccion.region} ${direccion.codigoPostal}")
         }
     }
 }
 
 @Composable
 private fun ReviewItem(review: ReviewResponse) {
-    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        shape = MaterialTheme.shapes.medium
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "Calificación: ", fontWeight = FontWeight.Bold)
-                (1..5).forEach { star ->
-                    Icon(
-                        modifier = Modifier.size(16.dp),
-                        contentDescription = null,
-                        tint = if(star <= review.calificacion) Color(0xFFFFC400) else Color.Gray,
-                        imageVector = if (star <= review.calificacion) Icons.Filled.Star else Icons.Outlined.Star
-                    )
+                Text(text = review.author, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.weight(1f))
+                Row {
+                    repeat(5) { index ->
+                        Icon(
+                            imageVector = if (index < review.calificacion) Icons.Filled.Star else Icons.Outlined.Star,
+                            contentDescription = "Estrella de calificación",
+                            tint = Color(0xFFFFC400)
+                        )
+                    }
                 }
             }
+            Spacer(modifier = Modifier.height(8.dp))
             Text(text = review.comentario)
-            Text(
-                text = review.fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }

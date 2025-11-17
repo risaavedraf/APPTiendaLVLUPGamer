@@ -27,7 +27,6 @@ class ProfileViewModel(
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
 
-    // Nuevo LiveData para el resultado de la subida de imagen
     private val _imageUploadResult = MutableLiveData<String?>()
     val imageUploadResult: LiveData<String?> = _imageUploadResult
 
@@ -60,15 +59,13 @@ class ProfileViewModel(
                 val response = imagenRepository.subirImagenUsuario(userId, imagePart)
                 if (response.isSuccessful) {
                     _imageUploadResult.postValue("Imagen subida con éxito")
-                    // **SOLUCIÓN:** Esperar un momento para que el servidor procese la imagen
-                    delay(1000) // 1 segundo
-                    // Ahora recargamos el perfil para ver los cambios
+                    delay(1000)
                     getMyProfile()
                 } else {
                     _imageUploadResult.postValue("Error al subir la imagen: ${response.message()}")
                 }
             } catch (e: Exception) {
-                _imageUploadResult.postValue("Excepción al subir la imagen: ${e.message()}")
+                _imageUploadResult.postValue("Excepción al subir la imagen: ${e.message}")
             }
         }
     }
@@ -78,7 +75,6 @@ class ProfileViewModel(
         _error.value = null
     }
 
-    // Nueva función para consumir el evento de subida de imagen
     fun onImageUploadHandled() {
         _imageUploadResult.value = null
     }

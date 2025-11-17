@@ -78,7 +78,7 @@ fun AppNavigation() {
             composable(AppScreens.EditProfileScreen.route) { EditProfileScreen(navController) }
             composable(AppScreens.MenuScreen.route) { MenuScreen(navController) }
             composable(AppScreens.EventsScreen.route) { EventsScreen(navController) }
-            composable(AppScreens.PedidosScreen.route) { PedidosScreen(navController) } // Nueva pantalla
+            composable(AppScreens.PedidosScreen.route) { PedidosScreen(navController) }
 
             composable(
                 route = AppScreens.DireccionesScreen.route,
@@ -93,18 +93,18 @@ fun AppNavigation() {
 
             composable(
                 route = AppScreens.ProductDetailScreen.route,
-                arguments = listOf(navArgument("productId") { type = NavType.StringType })
+                arguments = listOf(navArgument("productId") { type = NavType.LongType })
             ) { backStackEntry ->
-                val productId = backStackEntry.arguments?.getString("productId")
+                val productId = backStackEntry.arguments?.getLong("productId")
                 requireNotNull(productId)
                 ProductDetailScreen(navController = navController, productId = productId)
             }
 
             composable(
                 route = AppScreens.EventDetailScreen.route,
-                arguments = listOf(navArgument("eventId") { type = NavType.StringType })
+                arguments = listOf(navArgument("eventId") { type = NavType.LongType })
             ) { backStackEntry ->
-                val eventId = backStackEntry.arguments?.getString("eventId")
+                val eventId = backStackEntry.arguments?.getLong("eventId")
                 requireNotNull(eventId)
                 EventDetailScreen(navController = navController, eventId = eventId)
             }

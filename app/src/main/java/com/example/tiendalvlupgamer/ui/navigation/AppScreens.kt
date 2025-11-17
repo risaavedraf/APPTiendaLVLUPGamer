@@ -7,10 +7,10 @@ sealed class AppScreens(val route: String) {
     object HomeScreen : AppScreens("home_screen")
     object SearchScreen : AppScreens("search")
     object ProductDetailScreen : AppScreens("product_detail_screen/{productId}") {
-        fun createRoute(productId: String) = "product_detail_screen/$productId"
+        fun createRoute(productId: Long) = "product_detail_screen/$productId"
     }
     object EventDetailScreen : AppScreens("event_detail_screen/{eventId}") {
-        fun createRoute(eventId: String) = "event_detail_screen/$eventId"
+        fun createRoute(eventId: Long) = "event_detail_screen/$eventId"
     }
     object CatalogScreen : AppScreens("catalog_screen")
     object CartScreen : AppScreens("cart")
@@ -21,8 +21,8 @@ sealed class AppScreens(val route: String) {
     object DireccionFormScreen : AppScreens("direccion_form_screen/{direccionId}") {
         fun createRoute(direccionId: Long) = "direccion_form_screen/$direccionId"
     }
-    object DireccionesScreen : AppScreens("direcciones_screen?selectionMode={selectionMode}") { // 1. Ruta modificada
+    object DireccionesScreen : AppScreens("direcciones_screen?selectionMode={selectionMode}") {
         fun createRoute(selectionMode: Boolean = false) = "direcciones_screen?selectionMode=$selectionMode"
     }
-    object PedidosScreen : AppScreens("pedidos_screen") // 2. Nueva ruta
+    object PedidosScreen : AppScreens("pedidos_screen")
 }

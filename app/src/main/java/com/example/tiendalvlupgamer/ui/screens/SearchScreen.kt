@@ -95,7 +95,7 @@ fun SearchScreen(navController: NavController) {
                             LaunchedEffect(Unit) { viewModel.loadNextPage() }
                         }
                         ProductCard(product = producto, onClick = {
-                            navController.navigate(AppScreens.ProductDetailScreen.createRoute(producto.id.toString()))
+                            navController.navigate(AppScreens.ProductDetailScreen.createRoute(producto.id))
                         })
                     }
                     if (isLoadingMore) {

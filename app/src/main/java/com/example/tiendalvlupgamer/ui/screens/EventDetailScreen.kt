@@ -1,6 +1,6 @@
 package com.example.tiendalvlupgamer.ui.screens
 
-import androidx.compose.foundation.Image
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,25 +12,44 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.compose.rememberAsyncImagePainter
+import com.example.tiendalvlupgamer.data.network.RetrofitClient
+import com.example.tiendalvlupgamer.data.repository.EventoRepository
+import com.example.tiendalvlupgamer.ui.components.InfoRow
+import com.example.tiendalvlupgamer.ui.components.UrlBase64Image
 import com.example.tiendalvlupgamer.viewmodel.EventsViewModel
+import com.example.tiendalvlupgamer.viewmodel.EventsViewModelFactory
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EventDetailScreen(navController: NavController, eventId: String) {
-    val viewModel: EventsViewModel = viewModel()
+fun EventDetailScreen(navController: NavController, eventId: Long) {
+    val context = LocalContext.current
+    val viewModel: EventsViewModel = viewModel(
+        factory = EventsViewModelFactory(EventoRepository(RetrofitClient.eventoApiService))
+    )
     val event by viewModel.selectedEvent.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     LaunchedEffect(eventId) {
         viewModel.getEventById(eventId)
+    }
+
+    LaunchedEffect(error) {
+        error?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.clearError()
+        }
     }
 
     Scaffold(
@@ -44,37 +63,49 @@ fun EventDetailScreen(navController: NavController, eventId: String) {
                 }
             )
         }
-    ) {
-        if (event == null) {
-            Box(modifier = Modifier.fillMaxSize().padding(it), contentAlignment = Alignment.Center) {
+    ) { paddingValues ->
+        if (isLoading || event == null) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
                 CircularProgressIndicator()
             }
         } else {
+            val currentEvent = event!!
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(it)
+                    .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
             ) {
-                Image(
-                    painter = rememberAsyncImagePainter(model = event!!.imageUrl),
-                    contentDescription = event!!.name,
+                UrlBase64Image(
+                    imageUrl = currentEvent.imageUrl,
+                    contentDescription = currentEvent.name,
                     modifier = Modifier.fillMaxWidth().height(250.dp),
-                    contentScale = ContentScale.Crop
+                    placeholder = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.LightGray)
+                        )
+                    }
                 )
 
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(event!!.name, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                    val dateFormatter = remember {
+                        DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.SHORT)
+                    }
+
+                    Text(currentEvent.name, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
-                    InfoRow(label = "Fecha y Hora", value = event!!.date)
+                    InfoRow(label = "Fecha y Hora", value = currentEvent.date.format(dateFormatter))
                     Spacer(modifier = Modifier.height(8.dp))
-                    InfoRow(label = "Ubicación", value = event!!.locationName)
+                    InfoRow(label = "Ubicación", value = currentEvent.locationName)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(event!!.description, style = MaterialTheme.typography.bodyLarge)
+                    Text(currentEvent.description, style = MaterialTheme.typography.bodyLarge)
                 }
 
-                // --- MAPA DESACTIVADO ---
-                // El mapa se ha desactivado temporalmente. Se reactivará cuando la API Key esté disponible.
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -87,13 +118,5 @@ fun EventDetailScreen(navController: NavController, eventId: String) {
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun InfoRow(label: String, value: String) {
-    Column {
-        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
     }
 }
